@@ -147,6 +147,7 @@ find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 
 target_link_libraries(revc PRIVATE
     librw::librw
+    SDL2::SDL2main
     SDL2::SDL2
     OpenAL::OpenAL
     ${OPENGLES_FRAMEWORK}
