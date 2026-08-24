@@ -44,6 +44,8 @@ add_subdirectory("${REVC_VENDOR}/librw" "${CMAKE_CURRENT_BINARY_DIR}/librw")
 # OpenAL Soft built from source for iOS
 # ---------------------------------------------------------------------------
 include(FetchContent)
+# openal-soft's old cmake_minimum_required() trips modern CMake; allow it.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(LIBTYPE STATIC CACHE STRING "" FORCE)
 set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
 set(ALSOFT_NO_CONFIG_UTIL ON CACHE BOOL "" FORCE)
