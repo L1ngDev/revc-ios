@@ -396,11 +396,17 @@ psInitialize(void)
  	WindowFocused = TRUE;
  	WindowIconified = FALSE;
  	
- 	PsGlobal.joy1 = NULL;
- 	PsGlobal.joy2 = NULL;
+	PsGlobal.joy1 = NULL;
+	PsGlobal.joy2 = NULL;
 	for (size_t i = 0; i < kMaxFingerSlots; ++i)
 		fingerSlots[i] = kInvalidFinger;
+#ifdef __IPHONEOS__
+	ios_log("psInitialize: enter");
+#endif
     CFileMgr::Initialise();
+#ifdef __IPHONEOS__
+	ios_log("psInitialize: root dir = %s", CFileMgr::GetRootDirName());
+#endif
 	
 #ifdef PS2_MENU
 	CPad::Initialise();
@@ -564,6 +570,9 @@ psInitialize(void)
 #endif
   
   TheText.Unload();
+#ifdef __IPHONEOS__
+	ios_log("psInitialize: done");
+#endif
 	return TRUE;
 }
 
@@ -1496,6 +1505,11 @@ WinMain(HINSTANCE instance,
 int
 main(int argc, char *argv[])
 {
+#ifdef __IPHONEOS__
+	ios_log_open();
+	ios_install_crash_handler();
+	ios_log("main: entered (pid %d)", getpid());
+#endif
 #endif
 	RwV2d pos;
 	RwInt32 i;
@@ -1534,9 +1548,11 @@ main(int argc, char *argv[])
 		if (access(docsGame, F_OK) == 0) {
 			setenv("GAMEFILES", docsGame, 1);
 			chdir(docsGame);
+			ios_log("main: using Documents gamefiles: %s", docsGame);
 		} else {
 			setenv("GAMEFILES", ios_resource_path(), 1);
 			chdir(ios_resource_path());
+			ios_log("main: Documents gamefiles NOT found, using bundle: %s", ios_resource_path());
 		}
 	}
 #endif
@@ -1545,10 +1561,13 @@ main(int argc, char *argv[])
 	 * Initialize the platform independent data.
 	 * This will in turn initialize the platform specific data...
 	 */
+	ios_log("main: calling RsEventHandler(rsINITIALIZE)");
 	if( RsEventHandler(rsINITIALIZE, nil) == rsEVENTERROR )
 	{
+		ios_log("main: rsINITIALIZE FAILED");
 		return FALSE;
 	}
+	ios_log("main: rsINITIALIZE ok");
 
 	for(i=1; i<argc; i++)
 	{
@@ -1584,15 +1603,22 @@ main(int argc, char *argv[])
 	ControlsManager.MakeControllerActionsBlank();
 	ControlsManager.InitDefaultControlConfiguration();
 
-	/* 
+	/*
 	 * Initialize the 3D (RenderWare) components of the app...
 	 */
+#ifdef __IPHONEOS__
+	ios_log("main: calling rsRWINITIALIZE (%dx%d)", openParams.width, openParams.height);
+#endif
 	if( rsEVENTERROR == RsEventHandler(rsRWINITIALIZE, &openParams) )
 	{
+		ios_log("main: rsRWINITIALIZE FAILED");
 		RsEventHandler(rsTERMINATE, nil);
 
 		return 0;
 	}
+#ifdef __IPHONEOS__
+	ios_log("main: rw initialized ok");
+#endif
 
 #ifdef _WIN32
 	HWND wnd = glfwGetWin32Window(PSGLOBAL(window));

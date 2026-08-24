@@ -129,6 +129,7 @@ target_compile_definitions(revc PRIVATE
 target_compile_options(revc PRIVATE
     -fpermissive
     -funwind-tables
+    -g
     -Wall
     -Wno-reorder
     -Wno-unknown-pragmas
@@ -168,6 +169,9 @@ set_target_properties(revc PROPERTIES
     XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "13.0"
     XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
     XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
+    XCODE_ATTRIBUTE_STRIP_INSTALLED_PRODUCT "NO"
+    XCODE_ATTRIBUTE_COPY_PHASE_STRIP "NO"
+    XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING "NO"
 )
 
 # Bundle the repository gamefiles into the app (read-only base data).
