@@ -31,16 +31,10 @@ LoadLauncherImg(NSString *name)
 }
 
 extern "C" void
-ios_show_launcher(void *sdlwindow)
+ios_show_launcher(void *uiwindow)
 {
 	@autoreleasepool {
-		SDL_Window *win = (SDL_Window *)sdlwindow;
-		SDL_SysWMinfo wmi;
-		memset(&wmi, 0, sizeof(wmi));
-		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(win, &wmi))
-			return;
-		UIWindow *uiw = (__bridge UIWindow *)wmi.info.uikit.window;
+		UIWindow *uiw = (__bridge UIWindow *)uiwindow;
 		UIView *root = uiw.rootViewController.view;
 		if (!root)
 			return;
