@@ -75,6 +75,9 @@ void
 CPlayerSkin::Initialise(void)
 {
 	// empty on PS2
+#ifndef MASTER
+	debug("PlayerSkin::Initialise\n");
+#endif
 	m_txdSlot = CTxdStore::AddTxdSlot("skin");
 	CTxdStore::Create(m_txdSlot);
 	CTxdStore::AddRef(m_txdSlot);

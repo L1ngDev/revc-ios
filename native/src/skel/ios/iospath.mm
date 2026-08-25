@@ -163,4 +163,13 @@ ios_install_crash_handler(void)
 	const int sigs[] = { SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT, SIGTRAP };
 	for (size_t i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++)
 		sigaction(sigs[i], &act, nil);
+
+	// heartbeat: proves the process is alive even if the main thread hangs
+	dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
+		static int beat = 0;
+		while (true) {
+			[NSThread sleepForTimeInterval:5.0];
+			ios_log("heartbeat %d", ++beat);
+		}
+	});
 }

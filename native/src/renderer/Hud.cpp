@@ -1753,6 +1753,9 @@ void CHud::ReloadTXD()
 
 void CHud::Initialise()
 {
+#ifndef MASTER
+	debug("Hud::Initialise: enter\n");
+#endif
 	m_Wants_To_Draw_Hud = true;
 	m_Wants_To_Draw_3dMarkers = true;
 
@@ -1829,6 +1832,7 @@ void CHud::Initialise()
 	m_LastWeapon = 0;
 
 #ifndef MASTER
+	debug("Hud::Initialise: done\n");
 	VarConsole.Add("Draw HUD", &m_Wants_To_Draw_Hud, false);
 #endif
 	CTxdStore::PopCurrentTxd();
