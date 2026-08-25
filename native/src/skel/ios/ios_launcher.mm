@@ -1,6 +1,5 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
-#import <math.h>
 
 static volatile int g_playPressed = 0;
 
@@ -31,7 +30,6 @@ LoadLauncherImg(NSString *name)
 	return p ? [UIImage imageWithContentsOfFile:p] : nil;
 }
 
-// rounded rect + optional stroke, replicates the android vector drawables
 static UIView *
 PanelRect(CGRect frame, UIColor *fill, CGFloat radius, UIColor *stroke, CGFloat strokeWidth)
 {
@@ -53,25 +51,108 @@ Label(CGRect frame, NSString *text, CGFloat size, UIColor *color, BOOL bold, BOO
 	UILabel *l = [[UILabel alloc] initWithFrame:frame];
 	l.text = text;
 	l.textColor = color;
-	l.font = [UIFont systemFontOfSize:size weight:bold ? UIFontWeightBold : UIFontWeightRegular];
+	l.font = [UIFont systemFontOfSize:size weight:bold ? UIFontWeightHeavy : UIFontWeightRegular];
 	l.textAlignment = center ? NSTextAlignmentCenter : NSTextAlignmentLeft;
 	l.adjustsFontSizeToFitWidth = YES;
-	l.minimumScaleFactor = 0.6;
+	l.minimumScaleFactor = 0.5;
 	l.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	return l;
 }
 
-// social icon: rounded square with brand color and glyph text
+// YouTube: white rounded-rect play glyph on a dark translucent square
 static UIView *
-SocialIcon(CGRect frame, UIColor *color, NSString *glyph)
+YouTubeIcon(CGRect frame)
 {
 	UIView *v = [[UIView alloc] initWithFrame:frame];
-	v.backgroundColor = color;
-	v.layer.cornerRadius = frame.size.height * 0.22;
+	v.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.55];
+	v.layer.cornerRadius = frame.size.height * 0.24;
 	v.clipsToBounds = YES;
-	UILabel *l = Label(v.bounds, glyph, frame.size.height * 0.42, [UIColor whiteColor], YES, YES);
-	l.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-	[v addSubview:l];
+
+	UIView *screen = [[UIView alloc] initWithFrame:CGRectMake(frame.size.width * 0.20, frame.size.height * 0.31,
+		frame.size.width * 0.60, frame.size.height * 0.38)];
+	screen.backgroundColor = [UIColor whiteColor];
+	screen.layer.cornerRadius = screen.frame.size.height * 0.30;
+	[v addSubview:screen];
+
+	UIBezierPath *tri = [UIBezierPath bezierPath];
+	CGFloat cx = frame.size.width / 2, cy = frame.size.height / 2;
+	CGFloat s = frame.size.height * 0.095;
+	[tri moveToPoint:CGPointMake(cx - s * 0.85, cy - s)];
+	[tri addLineToPoint:CGPointMake(cx - s * 0.85, cy + s)];
+	[tri addLineToPoint:CGPointMake(cx + s * 1.05, cy)];
+	[tri closePath];
+	CAShapeLayer *sl = [CAShapeLayer layer];
+	sl.path = tri.CGPath;
+	sl.fillColor = [UIColor colorWithWhite:0.08 alpha:1.0].CGColor;
+	[screen.layer addSublayer:sl];
+	return v;
+}
+
+// VK: white VK logo on a dark translucent square
+static UIView *
+VKIcon(CGRect frame)
+{
+	UIView *v = [[UIView alloc] initWithFrame:frame];
+	v.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.55];
+	v.layer.cornerRadius = frame.size.height * 0.24;
+	v.clipsToBounds = YES;
+	[v addSubview:Label(v.bounds, @"VK", frame.size.height * 0.36, [UIColor whiteColor], YES, YES)];
+	return v;
+}
+
+// Telegram: white paper plane on a dark translucent square
+static UIView *
+TGIcon(CGRect frame)
+{
+	UIView *v = [[UIView alloc] initWithFrame:frame];
+	v.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.55];
+	v.layer.cornerRadius = frame.size.height * 0.24;
+	v.clipsToBounds = YES;
+
+	UIBezierPath *plane = [UIBezierPath bezierPath];
+	CGFloat w = frame.size.width, h = frame.size.height;
+	[plane moveToPoint:CGPointMake(w * 0.18, h * 0.52)];
+	[plane addLineToPoint:CGPointMake(w * 0.82, h * 0.25)];
+	[plane addLineToPoint:CGPointMake(w * 0.63, h * 0.77)];
+	[plane addLineToPoint:CGPointMake(w * 0.45, h * 0.59)];
+	[plane addLineToPoint:CGPointMake(w * 0.18, h * 0.52)];
+	[plane closePath];
+	CAShapeLayer *pl = [CAShapeLayer layer];
+	pl.path = plane.CGPath;
+	pl.fillColor = [UIColor whiteColor].CGColor;
+	[v.layer addSublayer:pl];
+
+	UIBezierPath *fold = [UIBezierPath bezierPath];
+	[fold moveToPoint:CGPointMake(w * 0.45, h * 0.59)];
+	[fold addLineToPoint:CGPointMake(w * 0.82, h * 0.25)];
+	[fold addLineToPoint:CGPointMake(w * 0.50, h * 0.68)];
+	[fold closePath];
+	CAShapeLayer *fl = [CAShapeLayer layer];
+	fl.path = fold.CGPath;
+	fl.fillColor = [UIColor colorWithWhite:0.82 alpha:1.0].CGColor;
+	[v.layer addSublayer:fl];
+	return v;
+}
+
+// Gold account badge: gold circle + white person silhouette
+static UIView *
+AccountIcon(CGRect frame)
+{
+	UIView *v = [[UIView alloc] initWithFrame:frame];
+	v.backgroundColor = [UIColor colorWithRed:0.96 green:0.78 blue:0.26 alpha:1.0];
+	v.layer.cornerRadius = frame.size.height / 2;
+	v.clipsToBounds = YES;
+
+	UIBezierPath *person = [UIBezierPath bezierPath];
+	CGFloat w = frame.size.width, h = frame.size.height;
+	[person appendPath:[UIBezierPath bezierPathWithOvalInRect:
+		CGRectMake(w * 0.34, h * 0.18, w * 0.32, h * 0.32)]];
+	[person appendPath:[UIBezierPath bezierPathWithOvalInRect:
+		CGRectMake(w * 0.20, h * 0.62, w * 0.60, h * 0.60)]];
+	CAShapeLayer *pl = [CAShapeLayer layer];
+	pl.path = person.CGPath;
+	pl.fillColor = [UIColor whiteColor].CGColor;
+	[v.layer addSublayer:pl];
 	return v;
 }
 
@@ -87,8 +168,6 @@ ios_show_launcher(void *uiwindow)
 
 		CGRect b = root.bounds;
 		CGFloat W = b.size.width, H = b.size.height;
-		// sdp scale: android design width is 390dp
-		CGFloat S = W / 390.0;
 
 		UIView *launch = [[UIView alloc] initWithFrame:b];
 		launch.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -106,7 +185,7 @@ ios_show_launcher(void *uiwindow)
 			[launch addSubview:bg];
 		}
 
-		// 2) left fade strip (28.12% width, full height)
+		// 2) left fade strip
 		UIImage *fadeImg = LoadLauncherImg(@"launcher_main_fade.webp");
 		if (fadeImg) {
 			UIImageView *fade = [[UIImageView alloc] initWithImage:fadeImg];
@@ -116,7 +195,7 @@ ios_show_launcher(void *uiwindow)
 			[launch addSubview:fade];
 		}
 
-		// 3) login fade top-right (20.72% x 16.48%)
+		// 3) login fade top-right
 		UIImage *loginFade = LoadLauncherImg(@"launcher_main_login_fade.webp");
 		if (loginFade) {
 			UIImageView *lf = [[UIImageView alloc] initWithImage:loginFade];
@@ -126,129 +205,133 @@ ios_show_launcher(void *uiwindow)
 			[launch addSubview:lf];
 		}
 
-		// 4) socials bottom-left (10.55%H squares, biases from the xml)
-		CGFloat socSize = H * 0.1055;
-		struct { CGFloat hb; NSString *glyph; UIColor *color; } socs[] = {
-			{ 0.021, @"YT", [UIColor colorWithRed:1.0 green:0.23 blue:0.19 alpha:1.0] },
-			{ 0.093, @"VK", [UIColor colorWithRed:0.0 green:0.47 blue:1.0 alpha:1.0] },
-			{ 0.166, @"TG", [UIColor colorWithRed:0.16 green:0.67 blue:0.93 alpha:1.0] },
-		};
-		for (int i = 0; i < 3; i++) {
-			CGRect fr = CGRectMake(socs[i].hb * (W - socSize), 0.9554 * (H - socSize), socSize, socSize);
-			[launch addSubview:SocialIcon(fr, socs[i].color, socs[i].glyph)];
-		}
+		// 4) "ВЫБОР СЕРВЕРА" + swap button (dark rounded square)
+		[launch addSubview:Label(CGRectMake(W * 0.02, H * 0.040, W * 0.14, H * 0.038),
+			@"ВЫБОР СЕРВЕРА", H * 0.033, [UIColor whiteColor], YES, NO)];
+		UIView *swapSq = PanelRect(CGRectMake(W * 0.165, H * 0.033, H * 0.055, H * 0.055),
+			[UIColor colorWithWhite:0.05 alpha:0.55], H * 0.014, nil, 0);
+		[swapSq addSubview:Label(swapSq.bounds, @"⇄", H * 0.032, [UIColor whiteColor], YES, YES)];
+		[launch addSubview:swapSq];
 
-		// 5) account panel top-right (35%W x 10%H)
+		// 5) current server panel (name / red caption / progress + status)
 		{
-			CGFloat pw = W * 0.35, ph = H * 0.10;
-			UIView *acc = [[UIView alloc] initWithFrame:CGRectMake(W - pw, 0, pw, ph)];
+			CGFloat pw = W * 0.175, ph = H * 0.128;
+			CGFloat px = W * 0.02, py = H * 0.094;
+			[launch addSubview:PanelRect(CGRectMake(px, py, pw, ph),
+				[UIColor colorWithWhite:0.0 alpha:0.28], H * 0.028,
+				[UIColor colorWithWhite:1.0 alpha:0.25], 1.5)];
 
-			// shield placeholder (rounded rect) at the right
-			CGFloat shH = ph * 0.6, shW = shH * 0.8;
-			UIView *shield = PanelRect(CGRectMake(pw - shW - 6, (ph - shH) / 2, shW, shH),
-				[UIColor colorWithWhite:1.0 alpha:0.15], 6, [UIColor colorWithWhite:1.0 alpha:0.4], 1);
-			[acc addSubview:shield];
-
-			// account circle icon left of the shield
-			CGFloat icH = ph * 0.5;
-			UIView *ic = [[UIView alloc] initWithFrame:CGRectMake(pw - shW - 6 - 6 - icH, (ph - icH) / 2, icH, icH)];
-			ic.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.2];
-			ic.layer.cornerRadius = icH / 2;
-			[acc addSubview:ic];
-
-			UILabel *title = Label(CGRectMake(0, ph * 0.16, pw - shW - 6 - 6 - icH - 8, ph * 0.3),
-				@"ВАШ АККАУНТ", 8 * S, [UIColor colorWithWhite:1.0 alpha:0.5], YES, NO);
-			title.textAlignment = NSTextAlignmentRight;
-			[acc addSubview:title];
-			UILabel *name = Label(CGRectMake(0, ph * 0.45, pw - shW - 6 - 6 - icH - 8, ph * 0.4),
-				@"Denny_Walker", 10 * S, [UIColor whiteColor], YES, NO);
-			name.textAlignment = NSTextAlignmentRight;
-			[acc addSubview:name];
-
-			acc.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleWidth;
-			[launch addSubview:acc];
-		}
-
-		// 6) "ВЫБОР СЕРВЕРА" title
-		[launch addSubview:Label(CGRectMake(W * 0.023, H * 0.04 - 7 * S, W * 0.1843, 14 * S),
-			@"ВЫБОР СЕРВЕРА", 10 * S, [UIColor whiteColor], YES, NO)];
-
-		// change-server icon (swap glyph)
-		UILabel *swap = Label(CGRectMake(W * 0.023 + W * 0.226 - 20 * S, H * 0.0444 - 8 * S, 20 * S, 16 * S),
-			@"⇄", 14 * S, [UIColor whiteColor], YES, YES);
-		[launch addSubview:swap];
-
-		// 7) current server panel (22.6%W x 13.88%H)
-		{
-			CGFloat pw = W * 0.226, ph = H * 0.1388;
-			CGFloat px = W * 0.023;
-			CGFloat py = 0.108 * (H - ph);
-			UIView *panel = PanelRect(CGRectMake(px, py, pw, ph),
-				[UIColor colorWithRed:0 green:0 blue:0 alpha:0.03], (32.79 / 546.0) * pw,
-				[UIColor colorWithWhite:1.0 alpha:0.22], 2);
-
-			// gold "#1" badge
+			// gold badge with "1"
 			UIImage *goldImg = LoadLauncherImg(@"launcher_servers_item_gold_bg.webp");
-			CGFloat bdW = pw * 0.265;
+			CGFloat bdW = W * 0.045;
 			UIView *badge;
 			if (goldImg) {
 				badge = [[UIImageView alloc] initWithImage:goldImg];
-				badge.frame = CGRectMake(pw * 0.06, (ph - bdW) / 2, bdW, bdW);
+				badge.frame = CGRectMake(px + W * 0.008, py + (ph - bdW) / 2, bdW, bdW);
 				badge.contentMode = UIViewContentModeScaleToFill;
+				badge.layer.cornerRadius = bdW * 0.22;
+				badge.clipsToBounds = YES;
 			} else {
-				badge = PanelRect(CGRectMake(pw * 0.06, (ph - bdW) / 2, bdW, bdW),
-					[UIColor colorWithRed:0.95 green:0.8 blue:0.2 alpha:1.0], bdW / 2, nil, 0);
+				badge = PanelRect(CGRectMake(px + W * 0.008, py + (ph - bdW) / 2, bdW, bdW),
+					[UIColor colorWithRed:0.97 green:0.80 blue:0.18 alpha:1.0], bdW * 0.22, nil, 0);
 			}
-			[badge addSubview:Label(badge.bounds, @"#1", 12 * S, [UIColor colorWithRed:0.3 green:0.27 blue:0.04 alpha:1.0], YES, YES)];
-			[panel addSubview:badge];
+			[badge addSubview:Label(badge.bounds, @"1", H * 0.055,
+				[UIColor colorWithRed:0.29 green:0.23 blue:0.0 alpha:1.0], YES, YES)];
+			[launch addSubview:badge];
 
-			// server name + load caption on the right side
-			UILabel *nm = Label(CGRectMake(pw * 0.36, ph * 0.14, pw * 0.6, ph * 0.28),
-				@"STAGE MOBILE", 9 * S, [UIColor whiteColor], YES, NO);
-			[panel addSubview:nm];
-			UILabel *cap = Label(CGRectMake(pw * 0.36, ph * 0.44, pw * 0.6, ph * 0.2),
-				@"ЗАГРУЖЕННОСТЬ СЕРВЕРА", 6 * S, [UIColor colorWithWhite:1.0 alpha:0.5], YES, NO);
-			[panel addSubview:cap];
+			// texts right of the badge
+			CGFloat tx = px + W * 0.008 + bdW + W * 0.012;
+			CGFloat tw = px + pw - tx - W * 0.008;
+			[launch addSubview:Label(CGRectMake(tx, py + ph * 0.10, tw, ph * 0.30),
+				@"STAGE MOBILE", H * 0.028, [UIColor whiteColor], YES, NO)];
+			[launch addSubview:Label(CGRectMake(tx, py + ph * 0.40, tw, ph * 0.22),
+				@"ЗАГРУЖЕННОСТЬ СЕРВЕРА", H * 0.016,
+				[UIColor colorWithRed:0.90 green:0.25 blue:0.22 alpha:1.0], YES, NO)];
 
-			// progress bar (30% loaded, green fill)
-			CGFloat pbW = pw * 0.288, pbH = H * 0.0466;
-			CGFloat pbX = 0.51 * (pw - pbW), pbY = 0.83 * (ph - pbH);
-			UIView *track = PanelRect(CGRectMake(pbX, pbY, pbW, pbH),
-				[UIColor colorWithWhite:1.0 alpha:0.2], 4 * S, nil, 0);
-			UIView *fill = PanelRect(CGRectMake(0, 0, pbW * 0.3, pbH),
-				[UIColor colorWithRed:0.62 green:1.0 blue:0.38 alpha:1.0], 4 * S, nil, 0);
-			[track addSubview:fill];
-			[panel addSubview:track];
-			UILabel *busy = Label(CGRectMake(pbX + pbW + 4 * S, pbY - 2 * S, pw - (pbX + pbW + 4 * S) - 6 * S, pbH + 4 * S),
-				@"ВЫСОКАЯ", 7 * S, [UIColor whiteColor], YES, NO);
-			[panel addSubview:busy];
-
-			[launch addSubview:panel];
+			// progress bar + status at the right
+			CGFloat pbW = tw * 0.42, pbH = H * 0.011;
+			UIView *track = PanelRect(CGRectMake(tx, py + ph * 0.74, pbW, pbH),
+				[UIColor colorWithWhite:1.0 alpha:0.30], pbH / 2, nil, 0);
+			[track addSubview:PanelRect(CGRectMake(0, 0, pbW * 0.15, pbH),
+				[UIColor colorWithWhite:1.0 alpha:0.95], pbH / 2, nil, 0)];
+			[launch addSubview:track];
+			[launch addSubview:Label(CGRectMake(tx + pbW + W * 0.008, py + ph * 0.66, tw - pbW - W * 0.008, ph * 0.26),
+				@"ВЫСОКАЯ", H * 0.020, [UIColor whiteColor], YES, NO)];
 		}
 
-		// 8) PLAY button bottom-right (20.31%W x 14.81%H), green gradient
+		// 6) account top-right (caption / nick / gold person badge)
 		{
-			CGFloat bw = W * 0.2031, bh = H * 0.1481;
-			CGFloat bx = 0.9739 * (W - bw), by = 0.9565 * (H - bh);
+			CGFloat iconSz = H * 0.055, rightM = W * 0.012;
+			[launch addSubview:AccountIcon(CGRectMake(W - iconSz - rightM, H * 0.030, iconSz, iconSz))];
+
+			CGFloat aw = W * 0.20;
+			UILabel *t = Label(CGRectMake(W - iconSz - rightM - W * 0.01 - aw, H * 0.022, aw, H * 0.028),
+				@"ВАШ АККАУНТ", H * 0.021, [UIColor colorWithWhite:1.0 alpha:0.60], YES, YES);
+			t.textAlignment = NSTextAlignmentRight;
+			[launch addSubview:t];
+			UILabel *n = Label(CGRectMake(W - iconSz - rightM - W * 0.01 - aw, H * 0.050, aw, H * 0.036),
+				@"Denny_Walker", H * 0.030, [UIColor whiteColor], YES, YES);
+			n.textAlignment = NSTextAlignmentRight;
+			[launch addSubview:n];
+		}
+
+		// 7) АКЦИЯ X2 promo + pill (right side)
+		{
+			NSMutableAttributedString *promo = [[NSMutableAttributedString alloc]
+				initWithString:@"АКЦИЯ X2"];
+			[promo addAttribute:NSFontAttributeName
+			          value:[UIFont systemFontOfSize:H * 0.047 weight:UIFontWeightHeavy]
+			          range:NSMakeRange(0, 8)];
+			[promo addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(0, 5)];
+			[promo addAttribute:NSForegroundColorAttributeName
+			          value:[UIColor colorWithRed:0.68 green:0.88 blue:0.21 alpha:1.0]
+			          range:NSMakeRange(6, 2)];
+			UILabel *pl = [[UILabel alloc] initWithFrame:CGRectMake(W * 0.68, H * 0.175, W * 0.30, H * 0.062)];
+			pl.attributedText = promo;
+			pl.textAlignment = NSTextAlignmentRight;
+			pl.adjustsFontSizeToFitWidth = YES;
+			pl.minimumScaleFactor = 0.5;
+			[launch addSubview:pl];
+
+			UIView *pill = PanelRect(CGRectMake(W * 0.805, H * 0.258, W * 0.173, H * 0.048),
+				[UIColor colorWithWhite:0.0 alpha:0.35], H * 0.024, nil, 0);
+			[pill addSubview:Label(pill.bounds, @"ОПЫТ / ЗАРПЛАТЫ / ПОПОЛНЕНИЕ", H * 0.018,
+				[UIColor whiteColor], YES, YES)];
+			[launch addSubview:pill];
+		}
+
+		// 8) socials bottom-left (dark squares, white logos)
+		{
+			CGFloat sw = W * 0.045, gap = W * 0.0225, sy = H - sw - H * 0.055;
+			[launch addSubview:YouTubeIcon(CGRectMake(W * 0.0225, sy, sw, sw))];
+			[launch addSubview:VKIcon(CGRectMake(W * 0.0225 + sw + gap, sy, sw, sw))];
+			[launch addSubview:TGIcon(CGRectMake(W * 0.0225 + (sw + gap) * 2, sy, sw, sw))];
+		}
+
+		// 9) PLAY button bottom-right
+		{
+			CGFloat bw = W * 0.20, bh = H * 0.145;
+			CGFloat bx = W - bw - W * 0.0225, by = H - bh - H * 0.05;
 			UIButton *play = [UIButton buttonWithType:UIButtonTypeCustom];
 			play.frame = CGRectMake(bx, by, bw, bh);
 
-			// gradient layer replicating launcher_main_play_btn vector
 			CAGradientLayer *grad = [CAGradientLayer layer];
 			grad.frame = play.bounds;
 			grad.colors = @[
-				(id)[UIColor colorWithRed:0x76/255.0 green:0xf8/255.0 blue:0x10/255.0 alpha:1.0].CGColor,
-				(id)[UIColor colorWithRed:0xd1/255.0 green:0xff/255.0 blue:0x6f/255.0 alpha:1.0].CGColor ];
-			grad.startPoint = CGPointMake(0.0, 1.0);
-			grad.endPoint = CGPointMake(0.35, 0.0);
-			grad.cornerRadius = (35.0 / 390.0) * bw;
+				(id)[UIColor colorWithRed:0xd1/255.0 green:0xff/255.0 blue:0x6f/255.0 alpha:1.0].CGColor,
+				(id)[UIColor colorWithRed:0x76/255.0 green:0xf8/255.0 blue:0x10/255.0 alpha:1.0].CGColor ];
+			grad.startPoint = CGPointMake(0.5, 0.0);
+			grad.endPoint = CGPointMake(0.5, 1.0);
+			grad.cornerRadius = H * 0.033;
 			grad.masksToBounds = YES;
 			[play.layer insertSublayer:grad atIndex:0];
 
 			[play setTitle:@"ИГРАТЬ" forState:UIControlStateNormal];
-			[play setTitleColor:[UIColor colorWithRed:0x38/255.0 green:0x62/255.0 blue:0x1a/255.0 alpha:1.0]
+			[play setTitleColor:[UIColor colorWithRed:0x2e/255.0 green:0x52/255.0 blue:0x14/255.0 alpha:1.0]
 			               forState:UIControlStateNormal];
-			play.titleLabel.font = [UIFont boldSystemFontOfSize:23 * S];
+			play.titleLabel.font = [UIFont systemFontOfSize:H * 0.061 weight:UIFontWeightHeavy];
+			play.titleLabel.adjustsFontSizeToFitWidth = YES;
+			play.titleLabel.minimumScaleFactor = 0.5;
 			play.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin;
 			[play addTarget:[REVCLauncherTap shared]
 			           action:@selector(playTapped)

@@ -8,8 +8,13 @@
 	<string>Vice City</string>
 	<key>CFBundleExecutable</key>
 	<string>revc</string>
-	<key>CFBundleIconFile</key>
-	<string></string>
+	<key>CFBundleIconFiles</key>
+	<array>
+		<string>AppIcon120</string>
+		<string>AppIcon152</string>
+		<string>AppIcon167</string>
+		<string>AppIcon180</string>
+	</array>
 	<key>CFBundleIdentifier</key>
 	<string>${MACOSX_BUNDLE_GUI_IDENTIFIER}</string>
 	<key>CFBundleInfoDictionaryVersion</key>

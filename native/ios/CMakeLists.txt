@@ -223,9 +223,20 @@ endif()
 
 # Launcher artwork (taken 1:1 from the NORMSOURCE launcher) into bundle/launcher
 file(GLOB REVC_LAUNCHER_ASSETS "${CMAKE_CURRENT_SOURCE_DIR}/launcher_assets/*")
+list(FILTER REVC_LAUNCHER_ASSETS EXCLUDE REGEX "AppIcon[0-9]+\\.png$")
 if(REVC_LAUNCHER_ASSETS)
     set_source_files_properties(${REVC_LAUNCHER_ASSETS} PROPERTIES
         MACOSX_PACKAGE_LOCATION "launcher"
     )
     target_sources(revc PRIVATE ${REVC_LAUNCHER_ASSETS})
+endif()
+
+# App icon (NORMSOURCE ic_launcher resized) into the bundle root,
+# referenced by CFBundleIconFiles in Info.plist.in
+file(GLOB REVC_APP_ICONS "${CMAKE_CURRENT_SOURCE_DIR}/launcher_assets/AppIcon*.png")
+if(REVC_APP_ICONS)
+    set_source_files_properties(${REVC_APP_ICONS} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    target_sources(revc PRIVATE ${REVC_APP_ICONS})
 endif()
