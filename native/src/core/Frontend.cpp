@@ -3064,7 +3064,7 @@ CMenuManager::LoadAllTextures()
 	if(frontendTxdSlot1 == -1)
 		frontendTxdSlot1 = CTxdStore::AddTxdSlot("frontend1");
 
-	printf("LOAD frontend1\n");
+	debug("LOAD frontend1\n");
 	CTxdStore::LoadTxd(frontendTxdSlot1, "MODELS/FRONTEN1.TXD");
 	CTxdStore::AddRef(frontendTxdSlot1);
 	CTxdStore::SetCurrentTxd(frontendTxdSlot1);
@@ -3087,7 +3087,7 @@ CMenuManager::LoadAllTextures()
 		if (frontendTxdSlot2 == -1)
 			frontendTxdSlot2 = CTxdStore::AddTxdSlot("frontend2");
 
-		printf("LOAD frontend2\n");
+		debug("LOAD frontend2\n");
 		CTxdStore::LoadTxd(frontendTxdSlot2, "MODELS/FRONTEN2.TXD");
 		CTxdStore::AddRef(frontendTxdSlot2);
 		CTxdStore::SetCurrentTxd(frontendTxdSlot2);

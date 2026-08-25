@@ -3,6 +3,9 @@
 #include <string.h>
 #include <assert.h>
 #include <new>
+#ifdef __APPLE__
+extern "C" void ios_log(const char *fmt, ...);
+#endif
 
 #include "rwbase.h"
 #include "rwerror.h"
@@ -309,12 +312,21 @@ Engine::start(void)
 	}
 
 	engine->device.system(DEVICEINIT, nil, 0);
+#ifdef __APPLE__
+	ios_log("engine: DEVICEINIT done");
+#endif
 
 	Engine::s_plglist.construct(engine);
+#ifdef __APPLE__
+	ios_log("engine: plugins constructed");
+#endif
 	for(uint i = 0; i < NUM_PLATFORMS; i++)
 		Driver::s_plglist[i].construct(rw::engine->driver[i]);
 
 	engine->device.system(DEVICEFINALIZE, nil, 0);
+#ifdef __APPLE__
+	ios_log("engine: DEVICEFINALIZE done");
+#endif
 
 	// Register some image formats. Or should we leave that to the user?
 	Image::registerFileFormat("tga", readTGA, writeTGA);

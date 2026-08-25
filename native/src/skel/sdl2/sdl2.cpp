@@ -1925,6 +1925,7 @@ main(int argc, char *argv[])
 #ifndef PS2_MENU
 					case GS_INIT_FRONTEND:
 					{
+						debug("state: GS_INIT_FRONTEND\n");
 						LoadingScreen(nil, nil, "loadsc0");
 						// LoadingScreen(nil, nil, "loadsc0"); // duplicate
 						
@@ -1946,11 +1947,17 @@ main(int argc, char *argv[])
 						
 						gGameState = GS_FRONTEND;
 						TRACE("gGameState = GS_FRONTEND;");
+						debug("state: GS_FRONTEND (menu loop starts)\n");
 						break;
 					}
 					
 					case GS_FRONTEND:
 					{
+#ifndef MASTER
+						static uint32 dwMenuLoops = 0;
+						if (++dwMenuLoops == 1 || dwMenuLoops % 600 == 0)
+							debug("menu: loop iteration %u\n", dwMenuLoops);
+#endif
 #ifdef _WIN32
 						// automated end-to-end test: skip menu straight into the game
 						static bool autoStartChecked = false;
@@ -1994,6 +2001,7 @@ main(int argc, char *argv[])
 					
 					case GS_INIT_PLAYING_GAME:
 					{
+						debug("state: GS_INIT_PLAYING_GAME (user pressed new game)\n");
 #ifdef PS2_MENU
 						CGame::Initialise("DATA\\GTA3.DAT");
 						

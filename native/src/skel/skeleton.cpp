@@ -306,20 +306,27 @@ RsRwInitialize(void *displayID)
 {
 	RwEngineOpenParams  openParams;
 
+#ifndef MASTER
+	debug("RW init: starting\n");
+#endif
+
 	/*
 	 * Start RenderWare...
 	 */
-	 
+
 	if (!RwEngineInit(psGetMemoryFunctions(), 0, rsRESOURCESDEFAULTARENASIZE))
 	{
 		return (FALSE);
 	}
+#ifndef MASTER
+	debug("RW init: RwEngineInit ok\n");
+#endif
 
 	/*
 	 * Install any platform specific file systems...
 	 */
 	psInstallFileSystem();
-	
+
 	/*
 	 * Initialize debug message handling...
 	 */
@@ -332,6 +339,9 @@ RsRwInitialize(void *displayID)
 	{
 		return (FALSE);
 	}
+#ifndef MASTER
+	debug("RW init: plugins attached\n");
+#endif
 
 	/*
 	 * Attach input devices...
@@ -340,7 +350,7 @@ RsRwInitialize(void *displayID)
 	{
 		return (FALSE);
 	}
-	
+
 	openParams.displayID = displayID;
 
 	if (!RwEngineOpen(&openParams))
@@ -348,6 +358,9 @@ RsRwInitialize(void *displayID)
 		RwEngineTerm();
 		return (FALSE);
 	}
+#ifndef MASTER
+	debug("RW init: engine open ok\n");
+#endif
 	
 	if (RsEventHandler(rsSELECTDEVICE, displayID) == rsEVENTERROR)
 	{
@@ -355,13 +368,19 @@ RsRwInitialize(void *displayID)
 		RwEngineTerm();
 		return (FALSE);
 	}
-	
+#ifndef MASTER
+	debug("RW init: device selected\n");
+#endif
+
 	if (!RwEngineStart())
 	{
 		RwEngineClose();
 		RwEngineTerm();
 		return (FALSE);
 	}
+#ifndef MASTER
+	debug("RW init: engine started ok\n");
+#endif
 
 	/*
 	 * Register loaders for an image with a particular file extension...
@@ -372,6 +391,10 @@ RsRwInitialize(void *displayID)
 
 	RwTextureSetAutoMipmapping(TRUE);
 	RwTextureSetMipmapping(FALSE);
+
+#ifndef MASTER
+	debug("RW init: COMPLETE\n");
+#endif
 
 	return TRUE;
 }

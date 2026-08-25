@@ -220,7 +220,7 @@ DoRWStuffStartOfFrame(int16 TopRed, int16 TopGreen, int16 TopBlue, int16 BottomR
 #ifndef MASTER
 		static uint32 dwFrameFailCount = 0;
 		if (++dwFrameFailCount == 1 || dwFrameFailCount % 300 == 0)
-			printf("frame: RsCameraBeginUpdate FAILED (#%u)\n", dwFrameFailCount), fflush(stdout);
+			debug("frame: RsCameraBeginUpdate FAILED (#%u)\n", dwFrameFailCount);
 #endif
 		return false;
 	}
@@ -229,7 +229,7 @@ DoRWStuffStartOfFrame(int16 TopRed, int16 TopGreen, int16 TopBlue, int16 BottomR
 	{
 		static uint32 dwFrameCount = 0;
 		if (++dwFrameCount == 1 || dwFrameCount % 300 == 0)
-			printf("frame: rendering frame #%u\n", dwFrameCount), fflush(stdout);
+			debug("frame: rendering frame #%u\n", dwFrameCount);
 	}
 #endif
 
@@ -250,7 +250,22 @@ DoRWStuffStartOfFrame_Horizon(int16 TopRed, int16 TopGreen, int16 TopBlue, int16
 	RwCameraClear(Scene.camera, &gColourTop, CLEARMODE);
 
 	if(!RsCameraBeginUpdate(Scene.camera))
+	{
+#ifndef MASTER
+		static uint32 dwHorizFrameFailCount = 0;
+		if (++dwHorizFrameFailCount == 1 || dwHorizFrameFailCount % 300 == 0)
+			debug("frame(horizon): RsCameraBeginUpdate FAILED (#%u)\n", dwHorizFrameFailCount);
+#endif
 		return false;
+	}
+
+#ifndef MASTER
+	{
+		static uint32 dwHorizFrameCount = 0;
+		if (++dwHorizFrameCount == 1 || dwHorizFrameCount % 300 == 0)
+			debug("frame(horizon): rendering frame #%u\n", dwHorizFrameCount);
+	}
+#endif
 
 	TheCamera.m_viewMatrix.Update();
 	CClouds::RenderBackground(TopRed, TopGreen, TopBlue, BottomRed, BottomGreen, BottomBlue, Alpha);
@@ -662,6 +677,10 @@ void
 LoadingScreen(const char *str1, const char *str2, const char *splashscreen)
 {
 	CSprite2d *splash;
+
+#ifndef MASTER
+	debug("LoadingScreen: %s / %s / %s\n", str1 ? str1 : "nil", str2 ? str2 : "nil", splashscreen ? splashscreen : "nil");
+#endif
 
 #ifdef ANDROID
 	AndroidSetLoadingOverlay(str1, str2, str1 != nil || str2 != nil || splashscreen != nil);

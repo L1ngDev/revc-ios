@@ -192,13 +192,22 @@ void ReplaceAtomicPipeCallback();
 bool
 CGame::InitialiseRenderWare(void)
 {
+#ifndef MASTER
+	debug("IRW: enter\n");
+#endif
 	ValidateVersion();
 #ifdef USE_TEXTURE_POOL
 	_TexturePoolsInitialise();
 #endif
+#ifndef MASTER
+	debug("IRW: texture pools ok\n");
+#endif
 
 	CTxdStore::Initialise();
 	CVisibilityPlugins::Initialise();
+#ifndef MASTER
+	debug("IRW: txdstore+visibility ok\n");
+#endif
 
 #ifdef GTA_PS2
 	RpSkySelectTrueTSClipper(TRUE);
@@ -217,15 +226,18 @@ CGame::InitialiseRenderWare(void)
 	{
 		return (false);
 	}
-	
+#ifndef MASTER
+	debug("IRW: camera ok\n");
+#endif
+
 	RwCameraSetFarClipPlane(Scene.camera, 2000.0f);
 	RwCameraSetNearClipPlane(Scene.camera, 0.9f);
-	
+
 	CameraSize(Scene.camera, nil, DEFAULT_VIEWWINDOW, DEFAULT_ASPECT_RATIO);
-	
+
 	/* Create a world */
 	RwBBox  bbox;
-	
+
 	bbox.sup.x = bbox.sup.y = bbox.sup.z = 10000.0f;
 	bbox.inf.x = bbox.inf.y = bbox.inf.z = -10000.0f;
 
@@ -237,12 +249,18 @@ CGame::InitialiseRenderWare(void)
 		Scene.camera = nil;
 		return (false);
 	}
-	
+#ifndef MASTER
+	debug("IRW: world ok\n");
+#endif
+
 	/* Add the camera to the world */
 	RpWorldAddCamera(Scene.world, Scene.camera);
 	LightsCreate(Scene.world);
 
 	CreateDebugFont();
+#ifndef MASTER
+	debug("IRW: lights+debugfont ok\n");
+#endif
 
 #ifdef LIBRW
 #if defined(PS2_MATFX) && !defined(ANDROID)
@@ -266,10 +284,16 @@ CGame::InitialiseRenderWare(void)
 #endif // LIBRW
 
 	PUSH_MEMID(MEMID_TEXTURES);
+#ifndef MASTER
+	debug("IRW: loading fonts/hud/skin\n");
+#endif
 	CFont::Initialise();
 	CHud::Initialise();
 	CPlayerSkin::Initialise();
 	POP_MEMID();
+#ifndef MASTER
+	debug("IRW: COMPLETE\n");
+#endif
 
 #ifdef EXTENDED_PIPELINES
 	CustomPipes::CustomPipeInit();	// need Scene.world for this
