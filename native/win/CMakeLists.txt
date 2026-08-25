@@ -70,7 +70,8 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
     SOURCE_SUBDIR ports/cmake
 )
-set(MPG123_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+set(BUILD_LIBOUT123 OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(mpg123)
 
 # ---------------------------------------------------------------------------
