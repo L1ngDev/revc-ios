@@ -1553,6 +1553,19 @@ closeSDL2(void)
 	return 1;
 }
 
+#ifdef __APPLE__
+// iOS has no desktop OpenGL — only OpenGL ES contexts are available.
+extern "C" void ios_log(const char *fmt, ...);
+static struct {
+	int gl;
+	int major, minor;
+} profiles[] = {
+	{ SDL_GL_CONTEXT_PROFILE_ES, 3, 1 },
+	{ SDL_GL_CONTEXT_PROFILE_ES, 3, 0 },
+	{ SDL_GL_CONTEXT_PROFILE_ES, 2, 0 },
+	{ 0, 0, 0 },
+};
+#else
 static struct {
 	int gl;
 	int major, minor;
@@ -1563,6 +1576,7 @@ static struct {
 	{ SDL_GL_CONTEXT_PROFILE_ES, 2, 0 },
 	{ 0, 0, 0 },
 };
+#endif
 
 static int
 startSDL2(void)
@@ -1577,6 +1591,11 @@ startSDL2(void)
 
 	int i;
 	for(i = 0; profiles[i].gl; i++){
+#ifdef __APPLE__
+		ios_log("gl3: trying GL profile %s %d.%d",
+			profiles[i].gl == SDL_GL_CONTEXT_PROFILE_ES ? "ES" : "CORE",
+			profiles[i].major, profiles[i].minor);
+#endif
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, profiles[i].gl);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, profiles[i].major);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, profiles[i].minor);
@@ -1600,6 +1619,14 @@ startSDL2(void)
 		return 0;
 	}
 	ctx = SDL_GL_CreateContext(win);
+#ifdef __APPLE__
+	ios_log("gl3: SDL_GL_CreateContext -> %s, SDL err: %s", ctx ? "ok" : "NULL", SDL_GetError() ? SDL_GetError() : "none");
+#endif
+	if (ctx == nil) {
+		RWERROR((ERR_GENERAL, SDL_GetError()));
+		SDL_DestroyWindow(win);
+		return 0;
+	}
 
 	if (!((gl3Caps.gles ? gladLoadGLES2Loader : gladLoadGLLoader) ((GLADloadproc) SDL_GL_GetProcAddress, gl3Caps.glversion)) ) {
 		RWERROR((ERR_GENERAL, "gladLoadGLLoader failed"));

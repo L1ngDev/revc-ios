@@ -137,10 +137,18 @@ ios_install_crash_handler(void)
 {
 	NSSetUncaughtExceptionHandler(ios_ns_exception_handler);
 
+	// alternate signal stack so we survive stack overflows too
+	static char sigstack[SIGSTKSZ * 4];
+	stack_t ss;
+	ss.ss_sp = sigstack;
+	ss.ss_size = sizeof(sigstack);
+	ss.ss_flags = 0;
+	sigaltstack(&ss, nil);
+
 	struct sigaction act;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = ios_signal_handler;
-	act.sa_flags = SA_SIGINFO;
+	act.sa_flags = SA_SIGINFO | SA_ONSTACK;
 	const int sigs[] = { SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT, SIGTRAP };
 	for (size_t i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++)
 		sigaction(sigs[i], &act, nil);
