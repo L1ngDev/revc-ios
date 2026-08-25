@@ -502,7 +502,8 @@ bindTexture(uint32 texid)
 	return prev;
 }
 
-#ifdef __IPHONEOS__
+#ifdef __APPLE__
+extern "C" void ios_log(const char *fmt, ...);
 // EAGL (iOS) has no default framebuffer 0 — SDL's UIKit view owns the real
 // framebuffer. Its id is queried after context creation and all binds of 0
 // are redirected to it.
@@ -1605,7 +1606,6 @@ closeSDL2(void)
 
 #ifdef __APPLE__
 // iOS has no desktop OpenGL — only OpenGL ES contexts are available.
-extern "C" void ios_log(const char *fmt, ...);
 static struct {
 	int gl;
 	int major, minor;
