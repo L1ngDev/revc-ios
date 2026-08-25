@@ -104,6 +104,14 @@ const char *shaderDecl310es =
 "#define FRAGCOLOR(c) (fragColor = c)\n"
 "precision highp float;\n"
 "precision highp int;\n";
+const char *shaderDecl300es =
+"#version 300 es\n"
+"#define VSIN(index) layout(location = index) in\n"
+"#define VSOUT out\n"
+"#define FSIN in\n"
+"#define FRAGCOLOR(c) (fragColor = c)\n"
+"precision highp float;\n"
+"precision highp int;\n";
 
 const char *shaderDecl;
 
@@ -1666,6 +1674,9 @@ startSDL2(void)
 	}
 	printf("gl3: glad loaded ok\n");
 	fflush(stdout);
+#ifdef __APPLE__
+	ios_log("gl3: glad loaded ok (gles=%d version=%d)", gl3Caps.gles, gl3Caps.glversion);
+#endif
 
 #ifndef _ANDROID
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
@@ -1866,6 +1877,9 @@ stopGLFW(void)
 static int
 initOpenGL(void)
 {
+#ifdef __APPLE__
+	ios_log("gl3: initOpenGL enter (gles=%d glversion=%d)", gl3Caps.gles, gl3Caps.glversion);
+#endif
 /*
 	// this only works from 3.0 onward,
 	// but luckily GLAD has already taken care of extensions for us
@@ -1888,8 +1902,12 @@ initOpenGL(void)
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl3Caps.maxAnisotropy);
 
 	if(gl3Caps.gles){
-		if(gl3Caps.glversion >= 30)
+		// iOS EAGL only provides ES 3.0 contexts (no 3.1), so pick the
+		// shader declaration based on the context we actually got.
+		if(gl3Caps.glversion >= 31)
 			shaderDecl = shaderDecl310es;
+		else if(gl3Caps.glversion >= 30)
+			shaderDecl = shaderDecl300es;
 		else
 			shaderDecl = shaderDecl100es;
 	}else{
@@ -1983,6 +2001,17 @@ initOpenGL(void)
 	assert(defaultShader_fullLight);
 	defaultShader_fullLight_noAT = Shader::create(vs_fullLight, fs_noAT);
 	assert(defaultShader_fullLight_noAT);
+
+#ifdef __APPLE__
+	ios_log("gl3: shaders compiled (default=%p noAT=%p fullLight=%p)", defaultShader, defaultShader_noAT, defaultShader_fullLight);
+#endif
+	if(!defaultShader || !defaultShader_noAT || !defaultShader_fullLight || !defaultShader_fullLight_noAT){
+		RWERROR((ERR_GENERAL, "shader creation failed"));
+#ifdef __APPLE__
+		ios_log("gl3: shader creation FAILED - failing device init");
+#endif
+		return 0;
+	}
 
 	openIm2D();
 	openIm3D();

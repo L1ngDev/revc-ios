@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#ifdef __APPLE__
+extern "C" void ios_log(const char *fmt, ...);
+#endif
 
 #include "../rwbase.h"
 #include "../rwerror.h"
@@ -201,6 +204,9 @@ compileshader(GLenum type, const char **src, GLuint *shader)
 		log = (char*)rwMalloc(len, MEMDUR_FUNCTION);
 		glGetShaderInfoLog(shdr, len, nil, log);
 		fprintf(stderr, "%s\n", log);
+#ifdef __APPLE__
+		ios_log("gl3: SHADER COMPILE FAILED (%s): %s", type == GL_VERTEX_SHADER ? "vertex" : "fragment", log);
+#endif
 		rwFree(log);
 		return 1;
 	}
@@ -238,6 +244,9 @@ linkprogram(GLint vs, GLint fs, GLuint *program)
 		log = (char*)rwMalloc(len, MEMDUR_FUNCTION);
 		glGetProgramInfoLog(prog, len, nil, log);
 		fprintf(stderr, "%s\n", log);
+#ifdef __APPLE__
+		ios_log("gl3: PROGRAM LINK FAILED: %s", log);
+#endif
 		rwFree(log);
 		return 1;
 	}
