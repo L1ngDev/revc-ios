@@ -1459,6 +1459,12 @@ showRaster(Raster *raster, uint32 flags)
 		if (pixLogged < 40 && glGlobals.presentWidth > 0) {
 			GLubyte px[4] = {0,0,0,0};
 			glReadPixels(glGlobals.presentWidth/2, glGlobals.presentHeight/2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px);
+#ifdef __APPLE__
+			if (pixLogged % 10 == 0)
+				ios_log("gl3 present #%d: center RGBA=%d,%d,%d,%d vp=%dx%d",
+					pixLogged, px[0], px[1], px[2], px[3],
+					glGlobals.presentWidth, glGlobals.presentHeight);
+#endif
 			printf("gl3 present #%d: center RGBA=%d,%d,%d,%d glErr=0x%x vp=%dx%d\n",
 				pixLogged, px[0], px[1], px[2], px[3], (unsigned)glGetError(),
 				glGlobals.presentWidth, glGlobals.presentHeight);

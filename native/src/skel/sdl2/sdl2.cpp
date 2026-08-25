@@ -1,12 +1,13 @@
 #include "SDL.h"
 #include "SDL_gamecontroller.h"
 #include "SDL_joystick.h"
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__IPHONEOS__)
 #include "SDL_syswm.h"
 #endif
 #ifdef __IPHONEOS__
 #include <unistd.h>
 #include "iospath.h"
+int g_iosSkipFrontend = 0;
 #endif
 #ifdef _WIN32
 #include <shlobj.h>
@@ -1644,6 +1645,26 @@ main(int argc, char *argv[])
 	ios_log("main: rw initialized ok");
 #endif
 	debug("main: rw initialized ok\n");
+
+#ifdef __IPHONEOS__
+	// NORMSOURCE-style launcher: wait for PLAY, then spawn straight into the game
+	{
+		char *sdlwin = nil;
+		SDL_SysWMinfo wmi;
+		memset(&wmi, 0, sizeof(wmi));
+		SDL_VERSION(&wmi.version);
+		if (SDL_GetWindowWMInfo(PSGLOBAL(window), &wmi))
+			sdlwin = (char *)wmi.info.uikit.window;
+		ios_show_launcher(sdlwin);
+		while (!ios_play_pressed()) {
+			SDL_PumpEvents();
+			SDL_Delay(30);
+		}
+		ios_log("launcher: PLAY pressed -> starting game directly");
+		debug("launcher: PLAY pressed -> starting game directly\n");
+		g_iosSkipFrontend = 1;
+	}
+#endif
 #ifdef _WIN32
 	SDL_SysWMinfo wminfo;
 	memset(&wminfo, 0, sizeof(wminfo));
@@ -1925,6 +1946,13 @@ main(int argc, char *argv[])
 #ifndef PS2_MENU
 					case GS_INIT_FRONTEND:
 					{
+#ifdef __IPHONEOS__
+						if (g_iosSkipFrontend) {
+							debug("state: skipping frontend (launcher PLAY)\n");
+							gGameState = GS_INIT_PLAYING_GAME;
+							break;
+						}
+#endif
 						debug("state: GS_INIT_FRONTEND\n");
 						LoadingScreen(nil, nil, "loadsc0");
 						// LoadingScreen(nil, nil, "loadsc0"); // duplicate

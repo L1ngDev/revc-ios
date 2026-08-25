@@ -89,6 +89,7 @@ list(FILTER REVC_SOURCES EXCLUDE REGEX ".*/audio/PoliceRadio\\.cpp$")
 
 list(APPEND REVC_SOURCES
     "${REVC_SRC}/skel/ios/iospath.mm"
+    "${REVC_SRC}/skel/ios/ios_launcher.mm"
 )
 
 set(REVC_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -192,7 +193,7 @@ set_target_properties(revc PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
     XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
-    XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "13.0"
+    XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0"
     XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
     XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
     XCODE_ATTRIBUTE_STRIP_INSTALLED_PRODUCT "NO"
@@ -218,4 +219,13 @@ if(EXISTS "${REVC_ROOT}/app/src/main/assets/mobileui")
                 "$<TARGET_BUNDLE_CONTENT_DIR:revc>/mobileui"
         COMMENT "Bundling mobile UI textures"
     )
+endif()
+
+# Launcher artwork (taken 1:1 from the NORMSOURCE launcher) into bundle/launcher
+file(GLOB REVC_LAUNCHER_ASSETS "${CMAKE_CURRENT_SOURCE_DIR}/launcher_assets/*")
+if(REVC_LAUNCHER_ASSETS)
+    set_source_files_properties(${REVC_LAUNCHER_ASSETS} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "launcher"
+    )
+    target_sources(revc PRIVATE ${REVC_LAUNCHER_ASSETS})
 endif()

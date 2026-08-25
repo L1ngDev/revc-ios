@@ -22,6 +22,12 @@ void ios_log_raw(const char *s);
 /* Install signal + NSException handlers that dump a backtrace to gamelog.txt */
 void ios_install_crash_handler(void);
 
+/* Show the NORMSOURCE-style launcher UI over the SDL window (blocking flag inside) */
+void ios_show_launcher(void *sdlwindow);
+
+/* Returns 1 once the user pressed PLAY in the launcher */
+int ios_play_pressed(void);
+
 #ifdef __cplusplus
 }
 #endif
