@@ -1590,6 +1590,7 @@ startSDL2(void)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, glGlobals.numSamples);
 
 	int i;
+	bool haveCtx = false;
 	for(i = 0; profiles[i].gl; i++){
 #ifdef __APPLE__
 		ios_log("gl3: trying GL profile %s %d.%d",
@@ -1608,23 +1609,24 @@ startSDL2(void)
 			if (win)
 				SDL_SetWindowDisplayMode(win, NULL);
 		}
-		if(win){
-			gl3Caps.gles = profiles[i].gl == SDL_GL_CONTEXT_PROFILE_ES;
-			gl3Caps.glversion = profiles[i].major*10 + profiles[i].minor;
-			break;
-		}
-	}
-	if(win == nil){
-		RWERROR((ERR_GENERAL, SDL_GetError()));
-		return 0;
-	}
-	ctx = SDL_GL_CreateContext(win);
+		if(!win)
+			continue;
+		ctx = SDL_GL_CreateContext(win);
 #ifdef __APPLE__
-	ios_log("gl3: SDL_GL_CreateContext -> %s, SDL err: %s", ctx ? "ok" : "NULL", SDL_GetError() ? SDL_GetError() : "none");
+		ios_log("gl3: SDL_GL_CreateContext -> %s, SDL err: %s", ctx ? "ok" : "NULL", SDL_GetError() ? SDL_GetError() : "none");
 #endif
-	if (ctx == nil) {
+		if(ctx == nil){
+			SDL_DestroyWindow(win);
+			win = nil;
+			continue;
+		}
+		gl3Caps.gles = profiles[i].gl == SDL_GL_CONTEXT_PROFILE_ES;
+		gl3Caps.glversion = profiles[i].major*10 + profiles[i].minor;
+		haveCtx = true;
+		break;
+	}
+	if(!haveCtx){
 		RWERROR((ERR_GENERAL, SDL_GetError()));
-		SDL_DestroyWindow(win);
 		return 0;
 	}
 
