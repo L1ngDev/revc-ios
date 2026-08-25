@@ -179,7 +179,13 @@ CAnimBlendAssocGroup::CreateAssociations(const char *blockName, RpClump *clump, 
 
 	numAssociations = 0;
 	for(i = 0; i < numAssocs; i++){
-		assocList[i].Init(clump, CAnimManager::GetAnimation(animNames[i], animBlock));
+		CAnimBlendHierarchy *hier = CAnimManager::GetAnimation(animNames[i], animBlock);
+		if(hier == nil){
+			debug("\n\nANIM '%s' NOT FOUND IN BLOCK '%s' (substituting first block anim)\n\n", animNames[i], blockName);
+			// point at a valid hierarchy so nothing ever dereferences null
+			hier = CAnimManager::GetAnimation(animBlock->firstIndex);
+		}
+		assocList[i].Init(clump, hier);
 		assocList[i].animId = firstAnimId + i;
 		assocList[i].groupId = groupId;
 	}

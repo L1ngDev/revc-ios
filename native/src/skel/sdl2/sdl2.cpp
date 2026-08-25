@@ -1951,6 +1951,19 @@ main(int argc, char *argv[])
 					
 					case GS_FRONTEND:
 					{
+#ifdef _WIN32
+						// automated end-to-end test: skip menu straight into the game
+						static bool autoStartChecked = false;
+						if (!autoStartChecked) {
+							autoStartChecked = true;
+							char as[8];
+							if (GetEnvironmentVariableA("REVC_AUTOSTART", as, sizeof(as)) > 0) {
+								debug("AUTOSTART: jumping straight into game\n");
+								gGameState = GS_INIT_PLAYING_GAME;
+								break;
+							}
+						}
+#endif
 						if(!WindowIconified)
 							RsEventHandler(rsFRONTENDIDLE, nil);
 
