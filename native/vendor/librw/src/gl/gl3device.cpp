@@ -502,9 +502,20 @@ bindTexture(uint32 texid)
 	return prev;
 }
 
+#ifdef __IPHONEOS__
+// EAGL (iOS) has no default framebuffer 0 — SDL's UIKit view owns the real
+// framebuffer. Its id is queried after context creation and all binds of 0
+// are redirected to it.
+uint32 g_iOSMainFBO = 0;
+#endif
+
 void
 bindFramebuffer(uint32 fbo)
 {
+#ifdef __IPHONEOS__
+	if(fbo == 0)
+		fbo = g_iOSMainFBO;
+#endif
 	if(currentFramebuffer != fbo){
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		currentFramebuffer = fbo;
@@ -1258,7 +1269,12 @@ getFramebufferRect(Raster *frameBuffer)
 	Raster *fb = frameBuffer->parent;
 	if(fb->type == Raster::CAMERA){
 #ifdef LIBRW_SDL2
+#ifdef __IPHONEOS__
+		// Retina: drawable is bigger than the window (points)
+		SDL_GL_GetDrawableSize(glGlobals.window, &r.w, &r.h);
+#else
 		SDL_GetWindowSize(glGlobals.window, &r.w, &r.h);
+#endif
 #else
 		glfwGetFramebufferSize(glGlobals.window, &r.w, &r.h);
 #endif
@@ -1698,6 +1714,18 @@ startSDL2(void)
 	glGlobals.presentHeight = 0;
 	glGlobals.presentOffX = 0;
 	glGlobals.presentOffY = 0;
+#ifdef __IPHONEOS__
+	{
+		// grab SDL's view framebuffer — there is no framebuffer 0 on EAGL
+		SDL_GL_MakeCurrent(win, ctx);
+		GLint fb = 0;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
+		g_iOSMainFBO = (uint32)fb;
+		int dw = 0, dh = 0;
+		SDL_GL_GetDrawableSize(win, &dw, &dh);
+		ios_log("gl3: iOS main FBO=%d drawable=%dx%d", fb, dw, dh);
+	}
+#endif
 	return 1;
 }
 
