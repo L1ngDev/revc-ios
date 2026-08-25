@@ -5,6 +5,7 @@
 #include <new>
 #ifdef __APPLE__
 extern "C" void ios_log(const char *fmt, ...);
+extern "C" void *revc_fcaseopen(char const *filename, char const *mode);
 #endif
 
 #include "rwbase.h"
@@ -257,7 +258,12 @@ Engine::open(EngineOpenParams *p)
 	engine = (Engine*)rwNew(Engine::s_plglist.size, MEMDUR_GLOBAL);
 	engine->currentCamera = nil;
 	engine->currentWorld = nil;
+#ifdef __APPLE__
+	// case-insensitive file access: game data files are lowercase on disk
+	engine->filefuncs.rwfopen = (void *(*)(const char*, const char*))revc_fcaseopen;
+#else
 	engine->filefuncs.rwfopen = (void *(*)(const char*, const char*))fopen;
+#endif
 	engine->filefuncs.rwfclose = (int (*)(void*))fclose;
 	engine->filefuncs.rwfseek = (int (*)(void*, long, int))fseek;
 	engine->filefuncs.rwftell = (long (*)(void*))ftell;

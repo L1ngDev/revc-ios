@@ -144,9 +144,12 @@ CTxdStore::LoadTxd(int slot, const char *filename)
 
 	ret = false;
 	_rwD3D8TexDictionaryEnableRasterFormatConversion(true);
-	do
-		stream = RwStreamOpen(rwSTREAMFILENAME, rwSTREAMREAD, filename);
-	while(stream == nil);
+	stream = RwStreamOpen(rwSTREAMFILENAME, rwSTREAMREAD, filename);
+	if(stream == nil){
+		// never spin forever on a missing/case-mismatched file
+		printf("Failed to open TXD file: %s\n", filename);
+		return false;
+	}
 	ret = LoadTxd(slot, stream);
 	RwStreamClose(stream, nil);
 	return ret;

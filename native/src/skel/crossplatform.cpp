@@ -157,6 +157,14 @@ FILE* _fcaseopen(char const* filename, char const* mode)
 	return result;
 }
 
+// C-linkage wrapper so librw's filefuncs can open files case-insensitively
+// (iOS/Linux filesystems are case-sensitive, game files are lowercase)
+extern "C" void*
+revc_fcaseopen(char const* filename, char const* mode)
+{
+	return (void*)_fcaseopen(filename, mode);
+}
+
 int _caserename(const char *old_filename, const char *new_filename)
 {
 	int result;
