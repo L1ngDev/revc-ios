@@ -216,7 +216,22 @@ DoRWStuffStartOfFrame(int16 TopRed, int16 TopGreen, int16 TopBlue, int16 BottomR
 	RwCameraClear(Scene.camera, &TopColor.rwRGBA, CLEARMODE);
 
 	if(!RsCameraBeginUpdate(Scene.camera))
+	{
+#ifndef MASTER
+		static uint32 dwFrameFailCount = 0;
+		if (++dwFrameFailCount == 1 || dwFrameFailCount % 300 == 0)
+			printf("frame: RsCameraBeginUpdate FAILED (#%u)\n", dwFrameFailCount), fflush(stdout);
+#endif
 		return false;
+	}
+
+#ifndef MASTER
+	{
+		static uint32 dwFrameCount = 0;
+		if (++dwFrameCount == 1 || dwFrameCount % 300 == 0)
+			printf("frame: rendering frame #%u\n", dwFrameCount), fflush(stdout);
+	}
+#endif
 
 	CSprite2d::InitPerFrame();
 

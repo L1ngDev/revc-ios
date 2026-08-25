@@ -136,11 +136,14 @@ CdStreamInit(int32 numChannels)
 	ASSERT( gpReadInfo != nil );
 	
 	debug("%s: read info %p\n", "cdvd_stream", gpReadInfo);
-	
+
+	debug("cdvd_stream: adding image MODELS\\GTA3.IMG\n");
 	CdStreamAddImage("MODELS\\GTA3.IMG");
-	
+	debug("cdvd_stream: image added, numImages=%d\n", gNumImages);
+
 	int32 nStatus = CdStreamRead(0, pBuffer, 0, 1);
-	
+	debug("cdvd_stream: test read status=%d\n", nStatus);
+
 	CdStreamRemoveImages();
 	
 	if ( nStatus == STREAM_SUCCESS )

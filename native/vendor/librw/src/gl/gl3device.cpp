@@ -1429,6 +1429,20 @@ showRaster(Raster *raster, uint32 flags)
 	}
 	// Drain GL before presenting to avoid queue buildup on tilers
 	glFlush();
+#ifdef LIBRW_SDL2
+	{
+		static int pixLogged = 0;
+		if (pixLogged < 40 && glGlobals.presentWidth > 0) {
+			GLubyte px[4] = {0,0,0,0};
+			glReadPixels(glGlobals.presentWidth/2, glGlobals.presentHeight/2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px);
+			printf("gl3 present #%d: center RGBA=%d,%d,%d,%d glErr=0x%x vp=%dx%d\n",
+				pixLogged, px[0], px[1], px[2], px[3], (unsigned)glGetError(),
+				glGlobals.presentWidth, glGlobals.presentHeight);
+			fflush(stdout);
+			pixLogged++;
+		}
+	}
+#endif
 	SDL_GL_SwapWindow(glGlobals.window);
 #else
 	static int lastSwapInterval = -2;
@@ -1521,6 +1535,8 @@ makeVideoModeList(int displayIndex)
 static int
 openSDL2(EngineOpenParams *openparams)
 {
+	printf("gl3: openSDL2 enter\n");
+	fflush(stdout);
 	glGlobals.winWidth = openparams->width;
 	glGlobals.winHeight = openparams->height;
 	glGlobals.winTitle = openparams->windowtitle;
@@ -1533,6 +1549,8 @@ openSDL2(EngineOpenParams *openparams)
 		RWERROR((ERR_GENERAL, SDL_GetError()));
 		return 0;
 	}
+	printf("gl3: SDL video ok\n");
+	fflush(stdout);
 	if(SDL_InitSubSystem( SDL_INIT_GAMECONTROLLER ))
 	{
 		printf("Failed to initialize SDL GameController API: %s\n", SDL_GetError());
@@ -1542,6 +1560,8 @@ openSDL2(EngineOpenParams *openparams)
 	glGlobals.numDisplays = SDL_GetNumVideoDisplays();
 
 	makeVideoModeList(glGlobals.currentDisplay);
+	printf("gl3: openSDL2 done\n");
+	fflush(stdout);
 
 	return 1;
 }
@@ -1605,7 +1625,15 @@ startSDL2(void)
 			if (win)
 				SDL_SetWindowDisplayMode(win, &mode->mode);
 		} else {
-			win = SDL_CreateWindow(glGlobals.winTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, glGlobals.winWidth, glGlobals.winHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+			uint32 wndFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+#ifndef _WIN32
+			wndFlags |= SDL_WINDOW_FULLSCREEN;
+#else
+			// allow forcing windowed mode for debugging (REVC_WINDOWED=1)
+			if (getenv("REVC_WINDOWED") == nil)
+				wndFlags |= SDL_WINDOW_FULLSCREEN;
+#endif
+			win = SDL_CreateWindow(glGlobals.winTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, glGlobals.winWidth, glGlobals.winHeight, wndFlags);
 			if (win)
 				SDL_SetWindowDisplayMode(win, NULL);
 		}
@@ -1636,6 +1664,8 @@ startSDL2(void)
 		SDL_DestroyWindow(win);
 		return 0;
 	}
+	printf("gl3: glad loaded ok\n");
+	fflush(stdout);
 
 #ifndef _ANDROID
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));

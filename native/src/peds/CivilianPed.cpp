@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include <cfloat>
+
 #include "CivilianPed.h"
 #include "Phones.h"
 #include "General.h"

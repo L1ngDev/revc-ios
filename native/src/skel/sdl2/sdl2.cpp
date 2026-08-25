@@ -1,6 +1,9 @@
 #include "SDL.h"
 #include "SDL_gamecontroller.h"
 #include "SDL_joystick.h"
+#ifdef _WIN32
+#include "SDL_syswm.h"
+#endif
 #ifdef __IPHONEOS__
 #include <unistd.h>
 #include "iospath.h"
@@ -14,7 +17,7 @@
 #include <windowsx.h>
 
 DWORD _dwOperatingSystemVersion;
-#include "resource.h"
+#include "../win/resource.h"
 #else
 long _dwOperatingSystemVersion;
 #ifndef __SWITCH__
@@ -1511,6 +1514,17 @@ main(int argc, char *argv[])
 	ios_log("main: entered (pid %d)", getpid());
 #endif
 #endif
+#ifdef _WIN32
+	setvbuf(stdout, nil, _IONBF, 0);
+	// Make CWD match GAMEFILES so all relative file opens (MODELS\GTA3.IMG etc.) resolve
+	{
+		char gf[MAX_PATH];
+		if (GetEnvironmentVariableA("GAMEFILES", gf, sizeof(gf)) > 0) {
+			SetCurrentDirectoryA(gf);
+			printf("main: CWD set to GAMEFILES: %s\n", gf);
+		}
+	}
+#endif
 	RwV2d pos;
 	RwInt32 i;
 
@@ -1537,7 +1551,11 @@ main(int argc, char *argv[])
 		if(strcmp(argv[i], "--dir") == 0 && i + 1 < argc)
 		{
 			const char *gamePath = argv[i+1];
+#ifdef _WIN32
+			_putenv_s("GAMEFILES", gamePath);
+#else
 			setenv("GAMEFILES", gamePath, 1);
+#endif
 		}
 	}
 
@@ -1561,13 +1579,13 @@ main(int argc, char *argv[])
 	 * Initialize the platform independent data.
 	 * This will in turn initialize the platform specific data...
 	 */
-	ios_log("main: calling RsEventHandler(rsINITIALIZE)");
+	debug("main: calling RsEventHandler(rsINITIALIZE)\n");
 	if( RsEventHandler(rsINITIALIZE, nil) == rsEVENTERROR )
 	{
-		ios_log("main: rsINITIALIZE FAILED");
+		debug("main: rsINITIALIZE FAILED\n");
 		return FALSE;
 	}
-	ios_log("main: rsINITIALIZE ok");
+	debug("main: rsINITIALIZE ok\n");
 
 	for(i=1; i<argc; i++)
 	{
@@ -1578,16 +1596,24 @@ main(int argc, char *argv[])
 	 * Get proper command line params, cmdLine passed to us does not
 	 * work properly under all circumstances...
 	 */
-	cmdLine = GetCommandLine();
+	{
+		int wargc = 0;
+		LPWSTR *wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+		static char *argvStore[64];
+		static char argvBuf[4096];
+		char *p = argvBuf;
+		for (int k = 0; k < wargc && k < 64; k++) {
+			size_t len = WideCharToMultiByte(CP_UTF8, 0, wargv[k], -1, p, (int)(sizeof(argvBuf) - (size_t)(p - argvBuf)), nil, nil);
+			argvStore[k] = p;
+			p += len;
+		}
+		argc = wargc;
+		argv = argvStore;
+		LocalFree(wargv);
+	}
 
 	/*
-	 * Parse command line into standard (argv, argc) parameters...
-	 */
-	argv = CommandLineToArgv(cmdLine, &argc);
-
-
-	/* 
-	 * Parse command line parameters (except program name) one at 
+	 * Parse command line parameters (except program name) one at
 	 * a time BEFORE RenderWare initialization...
 	 */
 #endif
@@ -1606,12 +1632,10 @@ main(int argc, char *argv[])
 	/*
 	 * Initialize the 3D (RenderWare) components of the app...
 	 */
-#ifdef __IPHONEOS__
-	ios_log("main: calling rsRWINITIALIZE (%dx%d)", openParams.width, openParams.height);
-#endif
+	debug("main: calling rsRWINITIALIZE (%dx%d)\n", openParams.width, openParams.height);
 	if( rsEVENTERROR == RsEventHandler(rsRWINITIALIZE, &openParams) )
 	{
-		ios_log("main: rsRWINITIALIZE FAILED");
+		debug("main: rsRWINITIALIZE FAILED\n");
 		RsEventHandler(rsTERMINATE, nil);
 
 		return 0;
@@ -1619,14 +1643,13 @@ main(int argc, char *argv[])
 #ifdef __IPHONEOS__
 	ios_log("main: rw initialized ok");
 #endif
-
+	debug("main: rw initialized ok\n");
 #ifdef _WIN32
-	HWND wnd = glfwGetWin32Window(PSGLOBAL(window));
-
-	HICON icon = LoadIcon(instance, MAKEINTRESOURCE(IDI_MAIN_ICON));
-
-	SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
-	SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
+	SDL_SysWMinfo wminfo;
+	memset(&wminfo, 0, sizeof(wminfo));
+	SDL_VERSION(&wminfo.version);
+	SDL_GetWindowWMInfo(PSGLOBAL(window), &wminfo);
+	HWND wnd = wminfo.info.win.window;
 #endif
 
 	psPostRWinit();

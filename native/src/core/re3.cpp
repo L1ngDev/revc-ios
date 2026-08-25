@@ -1281,6 +1281,16 @@ void re3_assert(const char *expr, const char *filename, unsigned int lineno, con
 	strcat_s(re3_buff, re3_buffsize, "\n" );
 	strcat_s(re3_buff, re3_buffsize, "(Press Retry to debug the application)");
 
+	// Headless mode (automated testing): log and abort instead of blocking on a dialog
+	{
+		char headless[8];
+		if (GetEnvironmentVariableA("REVC_HEADLESS", headless, sizeof(headless)) > 0)
+		{
+			printf("\nREVC ASSERT FAILED (headless)\n\tFile: %s\n\tLine: %d\n\tFunction: %s\n\tExpression: %s\n", filename, lineno, func, expr);
+			fflush(stdout);
+			_exit(3);
+		}
+	}
 
 	nCode = ::MessageBoxA(nil, re3_buff, "REVC Assertion Failed!",
 		MB_ABORTRETRYIGNORE|MB_ICONHAND|MB_SETFOREGROUND|MB_TASKMODAL);
@@ -1322,6 +1332,17 @@ void re3_debug(const char *format, ...)
 	va_end(va);
 
 	printf("%s", re3_buff);
+#ifdef _WIN32
+	{
+		static FILE *logf = nil;
+		if (!logf)
+			logf = fopen("revc-win.log", "w");
+		if (logf) {
+			fprintf(logf, "%s", re3_buff);
+			fflush(logf);
+		}
+	}
+#endif
 	CDebug::DebugAddText(re3_buff);
 #endif
 }

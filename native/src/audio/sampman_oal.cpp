@@ -924,19 +924,19 @@ cSampleManager::Initialise(void)
 #endif
 
 		for ( int32 i = 0; i < TOTAL_STREAMED_SOUNDS; i++ )
-		{	
+		{
 			if ( aStream[0] && (
 #ifdef PS2_AUDIO_PATHS
-				aStream[0]->Open(PS2StreamedNameTable[i], IsThisTrackAt16KHz(i) ? 16000 : 32000) || 
+				aStream[0]->Open(PS2StreamedNameTable[i], IsThisTrackAt16KHz(i) ? 16000 : 32000) ||
 #endif
 				aStream[0]->Open(StreamedNameTable[i], IsThisTrackAt16KHz(i) ? 16000 : 32000)) )
 			{
 				uint32 tatalms = aStream[0]->GetLengthMS();
 				aStream[0]->Close();
-				
+
 				nStreamLength[i] = tatalms;
 			} else
-				USERERROR("Can't open '%s'\n", StreamedNameTable[i]);
+				debug("Audio: can't open '%s' (skipped)\n", StreamedNameTable[i]);
 		}
 #ifdef AUDIO_CACHE
 		cacheFile = fcaseopen("audio\\sound.cache", "wb");
