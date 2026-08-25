@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#ifdef __APPLE__
+extern "C" void ios_log(const char *fmt, ...);
+#endif
 
 #include "../rwbase.h"
 #include "../rwerror.h"
@@ -53,6 +56,9 @@ static int primTypeMap[] = {
 void
 openIm2D(void)
 {
+#ifdef __APPLE__
+	ios_log("gl3: openIm2D enter");
+#endif
 	// must already be registered by device. we just need the value
 	u_xform = registerUniform("u_xform", UNIFORM_VEC4);
 
@@ -62,6 +68,9 @@ openIm2D(void)
 	const char *fs[] = { shaderDecl, header_frag_src, simple_frag_src, nil };
 	im2dShader = Shader::create(vs, fs);
 	assert(im2dShader);
+#ifdef __APPLE__
+	ios_log("gl3: openIm2D shader=%p", im2dShader);
+#endif
 
 	glGenBuffers(1, &im2DIbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, im2DIbo);
@@ -212,11 +221,17 @@ static int32 num3DVertices;	// not actually needed here
 void
 openIm3D(void)
 {
+#ifdef __APPLE__
+	ios_log("gl3: openIm3D enter");
+#endif
 #include "shaders/im3d_gl.inc"
 #include "shaders/simple_fs_gl.inc"
 	const char *vs[] = { shaderDecl, header_vert_src, im3d_vert_src, nil };
 	const char *fs[] = { shaderDecl, header_frag_src, simple_frag_src, nil };
 	im3dShader = Shader::create(vs, fs);
+#ifdef __APPLE__
+	ios_log("gl3: openIm3D shader=%p", im3dShader);
+#endif
 	assert(im3dShader);
 
 	glGenBuffers(1, &im3DIbo);
