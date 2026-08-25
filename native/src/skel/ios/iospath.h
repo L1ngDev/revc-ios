@@ -16,6 +16,9 @@ void ios_log_open(void);
 /* Append a line to gamelog.txt (printf-style) and flush */
 void ios_log(const char *fmt, ...);
 
+/* Append a raw string + newline to gamelog.txt and flush */
+void ios_log_raw(const char *s);
+
 /* Install signal + NSException handlers that dump a backtrace to gamelog.txt */
 void ios_install_crash_handler(void);
 

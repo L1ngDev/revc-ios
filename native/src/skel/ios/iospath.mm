@@ -72,6 +72,17 @@ ios_log(const char *fmt, ...)
 	fflush(g_logFile);
 }
 
+extern "C" void
+ios_log_raw(const char *s)
+{
+	if (!g_logFile)
+		ios_log_open();
+	if (!g_logFile)
+		return;
+	fprintf(g_logFile, "%s\n", s);
+	fflush(g_logFile);
+}
+
 static void
 ios_dump_backtrace(void *ctx)
 {

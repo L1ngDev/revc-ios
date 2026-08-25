@@ -414,6 +414,10 @@ CreateTxdImageForVideoCard()
 	int32 i;
 	for (i = 0; i < TXDSTORESIZE; i++) {
 		ConvertingTexturesScreen(i, TXDSTORESIZE, "CVT_MSG");
+#ifdef __IPHONEOS__
+		if (i % 8 == 0)
+			debug("TXD convert: %d/%d\n", i, TXDSTORESIZE);
+#endif
 
 		if (CTxdStore::GetSlot(i) != nil && CStreaming::IsObjectInCdImage(i + STREAM_OFFSET_TXD)) {
 #ifdef FIX_BUGS

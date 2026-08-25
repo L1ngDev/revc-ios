@@ -1343,6 +1343,13 @@ void re3_debug(const char *format, ...)
 		}
 	}
 #endif
+#ifdef __IPHONEOS__
+	{
+		// mirror all engine debug output into the user-accessible gamelog
+		extern "C" void ios_log_raw(const char *);
+		ios_log_raw(re3_buff);
+	}
+#endif
 	CDebug::DebugAddText(re3_buff);
 #endif
 }

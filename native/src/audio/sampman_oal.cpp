@@ -925,6 +925,10 @@ cSampleManager::Initialise(void)
 
 		for ( int32 i = 0; i < TOTAL_STREAMED_SOUNDS; i++ )
 		{
+#ifdef __IPHONEOS__
+			if (i % 16 == 0)
+				debug("Audio: scanning stream %d/%d (%s)\n", i, TOTAL_STREAMED_SOUNDS, StreamedNameTable[i]);
+#endif
 			if ( aStream[0] && (
 #ifdef PS2_AUDIO_PATHS
 				aStream[0]->Open(PS2StreamedNameTable[i], IsThisTrackAt16KHz(i) ? 16000 : 32000) ||
