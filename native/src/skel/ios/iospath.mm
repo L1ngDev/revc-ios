@@ -124,7 +124,8 @@ ios_ns_exception_handler(NSException *exception)
 	if (g_logFile) {
 		fprintf(g_logFile, "\n!!!! NSException: %s !!!!\n", exception.name.UTF8String);
 		fprintf(g_logFile, "reason: %s\n", exception.reason ? exception.reason.UTF8String : "?");
-		fprintf(g_logFile, "call stack:\n%s\n", exception.callStackSymbols ? exception.callStackSymbols.UTF8String : "?");
+		NSString *stack = exception.callStackSymbols ? [exception.callStackSymbols componentsJoinedByString:@"\n"] : nil;
+		fprintf(g_logFile, "call stack:\n%s\n", stack ? stack.UTF8String : "?");
 		fflush(g_logFile);
 		fclose(g_logFile);
 		g_logFile = nil;
