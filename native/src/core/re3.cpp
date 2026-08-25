@@ -1,6 +1,9 @@
 #include <csignal>
 #define WITHWINDOWS
 #include "common.h"
+#ifdef __IPHONEOS__
+extern "C" void ios_log_raw(const char *);
+#endif
 #if defined DETECT_JOYSTICK_MENU && defined XINPUT
 #include <xinput.h>
 #if !defined(PSAPI_VERSION) || (PSAPI_VERSION > 1)
@@ -1344,11 +1347,8 @@ void re3_debug(const char *format, ...)
 	}
 #endif
 #ifdef __IPHONEOS__
-	{
-		// mirror all engine debug output into the user-accessible gamelog
-		extern "C" void ios_log_raw(const char *);
-		ios_log_raw(re3_buff);
-	}
+	// mirror all engine debug output into the user-accessible gamelog
+	ios_log_raw(re3_buff);
 #endif
 	CDebug::DebugAddText(re3_buff);
 #endif
