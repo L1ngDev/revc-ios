@@ -1474,10 +1474,6 @@ showRaster(Raster *raster, uint32 flags)
 		}
 	}
 #endif
-	// DIAG: force a solid green clear to verify the EAGL present path works
-	bindFramebuffer(g_iOSMainFBO);
-	glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
 	SDL_GL_SwapWindow(glGlobals.window);
 #else
 	static int lastSwapInterval = -2;
@@ -1724,18 +1720,9 @@ startSDL2(void)
 	glGlobals.presentHeight = 0;
 	glGlobals.presentOffX = 0;
 	glGlobals.presentOffY = 0;
-#ifdef __IPHONEOS__
-	{
-		// grab SDL's view framebuffer — there is no framebuffer 0 on EAGL
-		SDL_GL_MakeCurrent(win, ctx);
-		GLint fb = 0;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
-		g_iOSMainFBO = (uint32)fb;
-		int dw = 0, dh = 0;
-		SDL_GL_GetDrawableSize(win, &dw, &dh);
-		ios_log("gl3: iOS main FBO=%d drawable=%dx%d", fb, dw, dh);
-	}
-#endif
+	// NOTE: on iOS/EAGL the screen IS framebuffer 0 (SDL presents it).
+	// Do NOT redirect binds of 0 to a captured FBO, or rendering goes to an
+	// offscreen buffer and the screen stays black.
 	return 1;
 }
 
