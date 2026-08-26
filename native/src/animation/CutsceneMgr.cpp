@@ -184,12 +184,17 @@ CCutsceneMgr::Shutdown(void)
 void
 CCutsceneMgr::LoadCutsceneData(const char *szCutsceneName)
 {
-	// launcher-driven start: never play the intro cutscene, spawn straight in
-	if (gSkipIntroCutscene || CGeneral::faststricmp(szCutsceneName, "party") == 0) {
-		debug("cutscene '%s' skipped (skip-intro)\n", szCutsceneName);
+	debug("LoadCutsceneData called: '%s'\n", szCutsceneName);
+	// launcher-driven start: never play the FIRST cutscene (the intro),
+	// spawn straight into the game. Unconditional on first call.
+	static bool s_firstLoad = true;
+	if (gSkipIntroCutscene || s_firstLoad || CGeneral::faststricmp(szCutsceneName, "party") == 0) {
+		debug("INTRO SKIPPED (LoadCutsceneData '%s')\n", szCutsceneName);
+		s_firstLoad = false;
 		ms_wasCutsceneSkipped = true;
 		return;
 	}
+	s_firstLoad = false;
 
 	int file;
 	uint32 size;
@@ -613,6 +618,7 @@ CCutsceneMgr::AttachObjectToBone(CObject *pObject, CObject *pAttachTo, int bone)
 void
 CCutsceneMgr::RemoveEverythingFromTheWorldForTheBiggestFuckoffCutsceneEver()
 {
+	debug("RemoveEverythingFromTheWorld called\n");
 	// launcher start: the very first call is the intro teardown -> skip it so
 	// the world keeps rendering (otherwise we get a permanent black screen)
 	static bool s_firstFuckoff = true;
