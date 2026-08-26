@@ -58,6 +58,9 @@ long _dwOperatingSystemVersion;
 #include "MemoryCard.h"
 #include "Sprite2d.h"
 #include "AnimViewer.h"
+
+// iOS launcher: start the game directly, never play the intro cutscene
+bool gSkipIntroCutscene = true;
 #include "Font.h"
 #include "MemoryMgr.h"
 
@@ -2056,6 +2059,10 @@ main(int argc, char *argv[])
 						InitialiseGame();
 
 						FrontEndMenuManager.m_bGameNotLoaded = false;
+						// launcher start: fade in immediately, never sit on a black screen
+						TheCamera.SetFadeColour(0, 0, 0);
+						TheCamera.Fade(1.0f, FADE_IN);
+						TheCamera.ProcessFade();
 #endif
 						gGameState = GS_PLAYING_GAME;
 						TRACE("gGameState = GS_PLAYING_GAME;");

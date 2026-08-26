@@ -1606,6 +1606,21 @@ Idle(void *arg)
 	tbEndTimer("CGame::Process");
 	POP_MEMID();
 
+#ifndef MASTER
+	{
+		static uint32 sDiagFrame = 0;
+		if (++sDiagFrame % 150 == 1) {
+			debug("DIAG: t=%u step=%.2f fade=%.0f fstat=%d cut=%d cutTime=%d player=%d menu=%d",
+				CTimer::GetTimeInMilliseconds(), CTimer::GetTimeStep(),
+				CDraw::FadeValue, TheCamera.GetScreenFadeStatus(),
+				CCutsceneMgr::IsCutsceneProcessing() ? 1 : 0,
+				CCutsceneMgr::GetCutsceneTimeInMilleseconds(),
+				CWorld::Players[CWorld::PlayerInFocus].m_pPed != nil ? 1 : 0,
+				FrontEndMenuManager.m_bMenuActive ? 1 : 0);
+		}
+	}
+#endif
+
 	tbStartTimer(0, "DMAudio.Service");
 	DMAudio.Service();
 	tbEndTimer("DMAudio.Service");

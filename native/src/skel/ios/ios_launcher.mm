@@ -19,12 +19,8 @@ static ServerInfo g_servers[] = {
 static const int g_serverCount = sizeof(g_servers) / sizeof(g_servers[0]);
 static NSInteger g_selectedServer = 0;
 
-// live refs to main-screen labels so selection can update them
-static UILabel *g_mainBadgeNum;
-static UILabel *g_mainName;
-static UILabel *g_mainSub;
-static UIView *g_mainProgressFill;
-static CGFloat g_mainTrackW, g_mainTrackH;
+// main-screen server panel (a real launcher_servers_item), rebuilt on selection
+static UIView *g_mainPanelHolder;
 
 static const NSInteger kTagMain = 777001;
 static const NSInteger kTagLoader = 777002;
@@ -118,19 +114,15 @@ LoadLauncherImg(NSString *name)
 	return p ? [UIImage imageWithContentsOfFile:p] : nil;
 }
 
-// heavy blur: downscale to a tiny image, stretching it back up smears it
-static UIImage *
-BlurredMainBg(void)
+// smooth system blur overlay (goes on top of the bg art)
+static UIView *
+SmoothBlurOverlay(CGRect frame)
 {
-	UIImage *img = LoadLauncherImg(@"launcher_main_bg.webp");
-	if (!img)
-		return nil;
-	CGSize tiny = CGSizeMake(20, 20 * img.size.height / img.size.width);
-	UIGraphicsBeginImageContextWithOptions(tiny, NO, 1);
-	[img drawInRect:CGRectMake(0, 0, tiny.width, tiny.height)];
-	UIImage *small = UIGraphicsGetImageFromCurrentImageContext();
-	UIGraphicsEndImageContext();
-	return small;
+	UIVisualEffectView *v = [[UIVisualEffectView alloc]
+		initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark]];
+	v.frame = frame;
+	v.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+	return v;
 }
 
 static UIImageView *
@@ -458,19 +450,23 @@ ServerItem(CGSize size, NSInteger idx, void (^onSelect)(NSInteger))
 // ------------------------------------------------------------ servers screen
 static void
 HideServers(UIView *root);
+static void
+ShowServers(UIView *root);
 
 static void
 SelectServerAndUpdate(NSInteger sel, UIView *root)
 {
 	g_selectedServer = sel;
-	if (g_mainBadgeNum)
-		g_mainBadgeNum.text = [NSString stringWithFormat:@"%ld", (long)(sel + 1)];
-	if (g_mainName)
-		g_mainName.text = ServerName(sel);
-	if (g_mainSub)
-		g_mainSub.text = @(g_servers[sel].sub);
-	if (g_mainProgressFill)
-		g_mainProgressFill.frame = CGRectMake(0, 0, MAX(g_mainTrackH, g_mainTrackW * g_servers[sel].load), g_mainTrackH);
+	if (g_mainPanelHolder) {
+		for (UIView *v in [NSArray arrayWithArray:g_mainPanelHolder.subviews])
+			[v removeFromSuperview];
+		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, sel, ^{
+			ShowServers(root);
+		});
+		it.frame = g_mainPanelHolder.bounds;
+		it.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+		[g_mainPanelHolder addSubview:it];
+	}
 	HideServers(root);
 }
 
@@ -490,13 +486,10 @@ ShowServers(UIView *root)
 	scr.transform = CGAffineTransformMakeTranslation(W, 0);
 	scr.alpha = 0.6;
 
-	// blurred bg + dark overlay (#99000000 like the XML)
-	UIImageView *bg = [[UIImageView alloc] initWithImage:BlurredMainBg()];
-	bg.frame = b;
-	bg.contentMode = UIViewContentModeScaleToFill;
-	bg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-	[scr addSubview:bg];
-	[scr addSubview:PanelRect(b, [UIColor colorWithRed:0 green:0 blue:0 alpha:0.60], 0, nil, 0)];
+	// bg art + smooth blur + dark overlay (#99000000 like the XML)
+	[scr addSubview:BgView(b, @"launcher_main_bg.webp", UIViewContentModeScaleAspectFill)];
+	[scr addSubview:SmoothBlurOverlay(b)];
+	[scr addSubview:PanelRect(b, [UIColor colorWithRed:0 green:0 blue:0 alpha:0.35], 0, nil, 0)];
 
 	// back button (UIImageView needs userInteractionEnabled!)
 	UIImageView *back = [[UIImageView alloc] initWithImage:LoadLauncherImg(@"launcher_servers_back_btn.webp")];
@@ -615,13 +608,10 @@ ShowLoader(UIView *root)
 	ldr.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	ldr.backgroundColor = [UIColor blackColor];
 
-	// blurred background art (like the reference loader)
-	UIImageView *bg = [[UIImageView alloc] initWithImage:BlurredMainBg()];
-	bg.frame = b;
-	bg.contentMode = UIViewContentModeScaleToFill;
-	bg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-	[ldr addSubview:bg];
-	[ldr addSubview:PanelRect(b, [UIColor colorWithRed:0 green:0 blue:0 alpha:0.35], 0, nil, 0)];
+	// blurred background art (like the reference loader): art + system blur + tint
+	[ldr addSubview:BgView(b, @"launcher_main_bg.webp", UIViewContentModeScaleAspectFill)];
+	[ldr addSubview:SmoothBlurOverlay(b)];
+	[ldr addSubview:PanelRect(b, [UIColor colorWithRed:0 green:0 blue:0 alpha:0.30], 0, nil, 0)];
 
 	// dashed spinner (stands in for the lottie loader_screen_progress)
 	CGFloat d = H * 0.085;
@@ -711,58 +701,18 @@ BuildMainScreen(UIView *root)
 	[swapSq addSubview:Label(swapSq.bounds, @"⇄", H * 0.032, [UIColor whiteColor], YES, YES)];
 	[launch addSubview:swapSq];
 
-	// current server panel (tap -> servers list)
+	// current server panel = a real launcher_servers_item (tap -> servers list)
 	{
-		CGFloat pw = W * 0.175, ph = H * 0.128;
-		CGFloat px = W * 0.02, py = H * 0.094;
-		// the panel itself MUST be in the hierarchy (bg + border)
-		UIView *panel = PanelRect(CGRectMake(px, py, pw, ph),
-			[UIColor colorWithWhite:0.0 alpha:0.28], H * 0.028,
-			[UIColor colorWithWhite:1.0 alpha:0.25], 1.5);
-		[launch addSubview:panel];
-
-		UIImage *goldImg = LoadLauncherImg(@"launcher_servers_item_gold_bg.webp");
-		CGFloat bdW = ph * 0.61;
-		UIView *badge;
-		if (goldImg) {
-			badge = [[UIImageView alloc] initWithImage:goldImg];
-			badge.frame = CGRectMake(px + pw * 0.055, py + (ph - bdW) / 2, bdW, bdW);
-			badge.contentMode = UIViewContentModeScaleToFill;
-			badge.layer.cornerRadius = bdW * 0.22;
-			badge.clipsToBounds = YES;
-		} else {
-			badge = PanelRect(CGRectMake(px + pw * 0.055, py + (ph - bdW) / 2, bdW, bdW),
-				[UIColor colorWithRed:0.97 green:0.80 blue:0.18 alpha:1.0], bdW * 0.22, nil, 0);
-		}
-		g_mainBadgeNum = Label(badge.bounds,
-			[NSString stringWithFormat:@"%ld", (long)(g_selectedServer + 1)], bdW * 0.5,
-			[UIColor colorWithRed:0x4d/255.0 green:0x37/255.0 blue:0x09/255.0 alpha:1.0], YES, YES);
-		[badge addSubview:g_mainBadgeNum];
-		[launch addSubview:badge];
-
-		CGFloat tx = px + pw * 0.36;
-		CGFloat tw = px + pw - tx - W * 0.008;
-		g_mainName = Label(CGRectMake(tx, py + ph * 0.13, tw, ph * 0.28),
-			ServerName(g_selectedServer), H * 0.027, [UIColor whiteColor], YES, NO);
-		[launch addSubview:g_mainName];
-		g_mainSub = Label(CGRectMake(tx, py + ph * 0.42, tw, ph * 0.20),
-			@(g_servers[g_selectedServer].sub), H * 0.016,
-			[UIColor colorWithRed:1.0 green:0.42 blue:0.42 alpha:1.0], YES, NO);
-		[launch addSubview:g_mainSub];
-
-		CGFloat pbW = tw * 0.55, pbH = MAX(3.0, H * 0.012);
-		g_mainTrackW = pbW;
-		g_mainTrackH = pbH;
-		UIView *track = PanelRect(CGRectMake(tx, py + ph * 0.74, pbW, pbH),
-			[UIColor colorWithWhite:1.0 alpha:0.35], pbH / 2, nil, 0);
-		g_mainProgressFill = PanelRect(CGRectMake(0, 0, MAX(pbH, pbW * g_servers[g_selectedServer].load), pbH),
-			[UIColor whiteColor], pbH / 2, nil, 0);
-		[track addSubview:g_mainProgressFill];
-		[launch addSubview:track];
-		[launch addSubview:Label(CGRectMake(tx + pbW + W * 0.015, py + ph * 0.66, tw - pbW - W * 0.015, ph * 0.24),
-			@"1/1000", H * 0.020, [UIColor whiteColor], YES, NO)];
-
-		MakePressable(panel, ^{ ShowServers(root); });
+		g_mainPanelHolder = [[UIView alloc] initWithFrame:CGRectMake(W * 0.02, H * 0.094, W * 0.20, H * 0.123)];
+		g_mainPanelHolder.userInteractionEnabled = YES;
+		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, g_selectedServer, ^(NSInteger sel) {
+			(void)sel;
+			ShowServers(root);
+		});
+		it.frame = g_mainPanelHolder.bounds;
+		it.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+		[g_mainPanelHolder addSubview:it];
+		[launch addSubview:g_mainPanelHolder];
 	}
 	MakePressable(swapSq, ^{ ShowServers(root); });
 
@@ -866,10 +816,7 @@ ios_show_launcher(void *uiwindow)
 		[root layoutIfNeeded];
 
 		g_playPressed = 0;
-		g_mainBadgeNum = nil;
-		g_mainName = nil;
-		g_mainSub = nil;
-		g_mainProgressFill = nil;
+		g_mainPanelHolder = nil;
 
 		BuildMainScreen(root);
 		ShowLoader(root);

@@ -23,6 +23,9 @@
 #include "Radar.h"
 #include "Pools.h"
 
+// set by the iOS launcher skeleton: never play intro cutscenes
+extern bool gSkipIntroCutscene;
+
 const struct {
 	const char *szTrackName;
 	int iTrackId;
@@ -181,6 +184,13 @@ CCutsceneMgr::Shutdown(void)
 void
 CCutsceneMgr::LoadCutsceneData(const char *szCutsceneName)
 {
+	// launcher-driven start: no intro cutscene, spawn straight into the game
+	if (gSkipIntroCutscene) {
+		debug("cutscene '%s' skipped (skip-intro)\n", szCutsceneName);
+		ms_wasCutsceneSkipped = true;
+		return;
+	}
+
 	int file;
 	uint32 size;
 	uint32 offset;
