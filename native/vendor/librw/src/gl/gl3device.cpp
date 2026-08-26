@@ -1474,6 +1474,10 @@ showRaster(Raster *raster, uint32 flags)
 		}
 	}
 #endif
+	// DIAG: force a solid green clear to verify the EAGL present path works
+	bindFramebuffer(g_iOSMainFBO);
+	glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 	SDL_GL_SwapWindow(glGlobals.window);
 #else
 	static int lastSwapInterval = -2;

@@ -1610,13 +1610,17 @@ Idle(void *arg)
 	{
 		static uint32 sDiagFrame = 0;
 		if (++sDiagFrame % 150 == 1) {
-			debug("DIAG: t=%u step=%.2f fade=%.0f fstat=%d cut=%d cutTime=%d player=%d menu=%d",
+			CPlayerPed *dp = CWorld::Players[CWorld::PlayerInFocus].m_pPed;
+			CVector pp(0,0,0);
+			if (dp) pp = dp->GetPosition();
+			debug("DIAG: t=%u step=%.2f fade=%.0f fstat=%d cut=%d cutTime=%d player=%d menu=%d pedPos=%.1f,%.1f,%.1f",
 				CTimer::GetTimeInMilliseconds(), CTimer::GetTimeStep(),
 				CDraw::FadeValue, TheCamera.GetScreenFadeStatus(),
 				CCutsceneMgr::IsCutsceneProcessing() ? 1 : 0,
 				CCutsceneMgr::GetCutsceneTimeInMilleseconds(),
-				CWorld::Players[CWorld::PlayerInFocus].m_pPed != nil ? 1 : 0,
-				FrontEndMenuManager.m_bMenuActive ? 1 : 0);
+				dp != nil ? 1 : 0,
+				FrontEndMenuManager.m_bMenuActive ? 1 : 0,
+				pp.x, pp.y, pp.z);
 		}
 	}
 #endif
