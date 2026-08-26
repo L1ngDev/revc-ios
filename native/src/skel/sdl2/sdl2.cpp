@@ -54,6 +54,7 @@ long _dwOperatingSystemVersion;
 #include "ControllerConfig.h"
 #include "Frontend.h"
 #include "Game.h"
+#include "Camera.h"
 #include "PCSave.h"
 #include "MemoryCard.h"
 #include "Sprite2d.h"
