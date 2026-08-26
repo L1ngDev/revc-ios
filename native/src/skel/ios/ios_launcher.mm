@@ -380,26 +380,28 @@ AccountIcon(CGRect frame)
 }
 
 // one server item, matching the reference screenshot (launcher_servers_item)
+// decorate=NO -> no char/recommended icons (used for the main-screen panel)
 static UIView *
-ServerItem(CGSize size, NSInteger idx, void (^onSelect)(NSInteger))
+ServerItem(CGSize size, NSInteger idx, BOOL decorate, void (^onSelect)(NSInteger))
 {
 	CGFloat iw = size.width, ih = size.height;
 	UIView *item = PanelRect(CGRectMake(0, 0, iw, ih),
 		[UIColor colorWithWhite:0.0 alpha:0.12], iw * 0.060,
 		[UIColor colorWithWhite:1.0 alpha:0.22], MAX(1.0, iw * 0.006));
 
-	// gold badge with number
+	// gold badge with number (shifted a touch right on the main panel)
 	UIImage *goldImg = LoadLauncherImg(@"launcher_servers_item_gold_bg.webp");
 	CGFloat bw = ih * 0.63;
+	CGFloat bx = iw * (decorate ? 0.03 : 0.055);
 	UIView *badge;
 	if (goldImg) {
 		badge = [[UIImageView alloc] initWithImage:goldImg];
-		badge.frame = CGRectMake(iw * 0.03, (ih - bw) / 2, bw, bw);
+		badge.frame = CGRectMake(bx, (ih - bw) / 2, bw, bw);
 		badge.contentMode = UIViewContentModeScaleToFill;
 		badge.layer.cornerRadius = bw * 0.22;
 		badge.clipsToBounds = YES;
 	} else {
-		badge = PanelRect(CGRectMake(iw * 0.03, (ih - bw) / 2, bw, bw),
+		badge = PanelRect(CGRectMake(bx, (ih - bw) / 2, bw, bw),
 			[UIColor colorWithRed:0.97 green:0.80 blue:0.18 alpha:1.0], bw * 0.22, nil, 0);
 	}
 	[badge addSubview:Label(badge.bounds,
@@ -426,19 +428,20 @@ ServerItem(CGSize size, NSInteger idx, void (^onSelect)(NSInteger))
 	[item addSubview:Label(CGRectMake(nx + pw + iw * 0.04, py - ih * 0.06, iw * 0.28, ph + ih * 0.12),
 		@"1/1000", ih * 0.15, [UIColor whiteColor], YES, NO)];
 
-	// person icon (characters exist) top-right
-	UIImageView *ch = [[UIImageView alloc] initWithImage:LoadLauncherImg(@"launcher_servers_item_char_ic.webp")];
-	CGFloat cw = ih * 0.24;
-	ch.frame = CGRectMake(iw * 0.84, ih * 0.10, cw, cw);
-	ch.contentMode = UIViewContentModeScaleAspectFit;
-	[item addSubview:ch];
+	// person icon (characters exist) top-right + recommended green corner
+	if (decorate) {
+		UIImageView *ch = [[UIImageView alloc] initWithImage:LoadLauncherImg(@"launcher_servers_item_char_ic.webp")];
+		CGFloat cw = ih * 0.24;
+		ch.frame = CGRectMake(iw * 0.84, ih * 0.10, cw, cw);
+		ch.contentMode = UIViewContentModeScaleAspectFit;
+		[item addSubview:ch];
 
-	// recommended green corner at the bottom-right edge
-	UIImageView *rec = [[UIImageView alloc] initWithImage:LoadLauncherImg(@"launcher_servers_item_recommended_ic.webp")];
-	CGFloat rw = ih * 0.28;
-	rec.frame = CGRectMake(iw * 0.905, ih * 0.72, rw, rw);
-	rec.contentMode = UIViewContentModeScaleAspectFit;
-	[item addSubview:rec];
+		UIImageView *rec = [[UIImageView alloc] initWithImage:LoadLauncherImg(@"launcher_servers_item_recommended_ic.webp")];
+		CGFloat rw = ih * 0.28;
+		rec.frame = CGRectMake(iw * 0.905, ih * 0.72, rw, rw);
+		rec.contentMode = UIViewContentModeScaleAspectFit;
+		[item addSubview:rec];
+	}
 
 	MakePressable(item, ^{
 		if (onSelect)
@@ -460,7 +463,7 @@ SelectServerAndUpdate(NSInteger sel, UIView *root)
 	if (g_mainPanelHolder) {
 		for (UIView *v in [NSArray arrayWithArray:g_mainPanelHolder.subviews])
 			[v removeFromSuperview];
-		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, sel, ^(NSInteger s) {
+		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, sel, NO, ^(NSInteger s) {
 			(void)s;
 			ShowServers(root);
 		});
@@ -511,7 +514,7 @@ ShowServers(UIView *root)
 	// favourites row (server with created characters)
 	[scr addSubview:Label(CGRectMake(W * 0.0525, H * 0.155, W * 0.35, H * 0.045),
 		@"Избранные сервера:", H * 0.029, [UIColor whiteColor], YES, NO)];
-	UIView *favItem = ServerItem(CGSizeMake(iw, ih), 0, ^(NSInteger sel) {
+	UIView *favItem = ServerItem(CGSizeMake(iw, ih), 0, YES, ^(NSInteger sel) {
 		SelectServerAndUpdate(sel, root);
 	});
 	favItem.frame = CGRectMake(W * 0.0525, H * 0.233, iw, ih);
@@ -527,7 +530,7 @@ ShowServers(UIView *root)
 	CGFloat gapX = (W * 0.879 - 3 * iw) / 2, gapY = H * 0.025;
 	for (int i = 0; i < g_serverCount; i++) {
 		int row = i / 3, col = i % 3;
-		UIView *it = ServerItem(CGSizeMake(iw, ih), i, ^(NSInteger sel) {
+		UIView *it = ServerItem(CGSizeMake(iw, ih), i, YES, ^(NSInteger sel) {
 			SelectServerAndUpdate(sel, root);
 		});
 		it.frame = CGRectMake(col * (iw + gapX), row * (ih + gapY), iw, ih);
@@ -704,9 +707,9 @@ BuildMainScreen(UIView *root)
 
 	// current server panel = a real launcher_servers_item (tap -> servers list)
 	{
-		g_mainPanelHolder = [[UIView alloc] initWithFrame:CGRectMake(W * 0.02, H * 0.094, W * 0.20, H * 0.123)];
+		g_mainPanelHolder = [[UIView alloc] initWithFrame:CGRectMake(W * 0.02, H * 0.094, W * 0.178, H * 0.109)];
 		g_mainPanelHolder.userInteractionEnabled = YES;
-		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, g_selectedServer, ^(NSInteger sel) {
+		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, g_selectedServer, NO, ^(NSInteger sel) {
 			(void)sel;
 			ShowServers(root);
 		});

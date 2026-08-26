@@ -613,6 +613,12 @@ CCutsceneMgr::AttachObjectToBone(CObject *pObject, CObject *pAttachTo, int bone)
 void
 CCutsceneMgr::RemoveEverythingFromTheWorldForTheBiggestFuckoffCutsceneEver()
 {
+	// launcher start: don't tear the world down for the intro cutscene
+	if (gSkipIntroCutscene) {
+		debug("biggest fuckoff cutscene skipped (skip-intro)\n");
+		return;
+	}
+
 	CStreaming::ms_disableStreaming = true;
 	CColStore::RemoveAllCollision();
 	CWorld::bProcessCutsceneOnly = true;
