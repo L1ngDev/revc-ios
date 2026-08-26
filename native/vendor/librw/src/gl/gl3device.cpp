@@ -1422,7 +1422,9 @@ clearCamera(Camera *cam, RGBA *col, uint32 mode)
 	}
 
 	convColor(&colf, col);
-	glClearColor(colf.red, colf.green, colf.blue, colf.alpha);
+	// iOS/EAGL composites the GL layer over a black window; a transparent
+	// clear leaves the whole frame see-through -> black screen. Force opaque.
+	glClearColor(colf.red, colf.green, colf.blue, 1.0f);
 	mask = 0;
 	if(mode & Camera::CLEARIMAGE)
 		mask |= GL_COLOR_BUFFER_BIT;
