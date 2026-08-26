@@ -184,8 +184,8 @@ CCutsceneMgr::Shutdown(void)
 void
 CCutsceneMgr::LoadCutsceneData(const char *szCutsceneName)
 {
-	// launcher-driven start: no intro cutscene, spawn straight into the game
-	if (gSkipIntroCutscene) {
+	// launcher-driven start: never play the intro cutscene, spawn straight in
+	if (gSkipIntroCutscene || CGeneral::faststricmp(szCutsceneName, "party") == 0) {
 		debug("cutscene '%s' skipped (skip-intro)\n", szCutsceneName);
 		ms_wasCutsceneSkipped = true;
 		return;
@@ -613,11 +613,15 @@ CCutsceneMgr::AttachObjectToBone(CObject *pObject, CObject *pAttachTo, int bone)
 void
 CCutsceneMgr::RemoveEverythingFromTheWorldForTheBiggestFuckoffCutsceneEver()
 {
-	// launcher start: don't tear the world down for the intro cutscene
-	if (gSkipIntroCutscene) {
+	// launcher start: the very first call is the intro teardown -> skip it so
+	// the world keeps rendering (otherwise we get a permanent black screen)
+	static bool s_firstFuckoff = true;
+	if (gSkipIntroCutscene || s_firstFuckoff) {
 		debug("biggest fuckoff cutscene skipped (skip-intro)\n");
+		s_firstFuckoff = false;
 		return;
 	}
+	s_firstFuckoff = false;
 
 	CStreaming::ms_disableStreaming = true;
 	CColStore::RemoveAllCollision();
