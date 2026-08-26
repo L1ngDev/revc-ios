@@ -1,6 +1,9 @@
 #pragma once
 #include "CutsceneObject.h"
 
+// set by the iOS launcher skeleton: never engage cutscene mode for the intro
+extern bool gSkipIntroCutscene;
+
 #define CUTSCENENAMESIZE 8
 
 class CDirectory;
@@ -28,7 +31,12 @@ public:
 	static CDirectory *ms_pCutsceneDir;
 	static uint32 ms_cutsceneLoadStatus;
 
-	static void StartCutsceneProcessing() { ms_cutsceneProcessing = true; }
+	static void StartCutsceneProcessing() {
+		// skip the very first call (intro) so the world keeps rendering
+		static bool s_first = true;
+		if (gSkipIntroCutscene || s_first) { s_first = false; return; }
+		ms_cutsceneProcessing = true;
+	}
 	static bool IsRunning(void) { return ms_running; }
 	static bool HasLoaded(void) { return ms_loaded; }
 	static bool IsCutsceneProcessing(void) { return ms_cutsceneProcessing; }
