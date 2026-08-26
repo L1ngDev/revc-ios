@@ -1,0 +1,47 @@
+name: Build reVC iOS IPA
+
+on:
+  push:
+    branches: [ main, master, ios ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout (self-contained, no submodules)
+        uses: actions/checkout@v4
+
+      - name: Install CMake
+        run: brew install cmake
+
+      - name: Configure (iOS, arm64, unsigned)
+        run: |
+          cmake -S ios -B build \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphoneos \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DLIBRW_PLATFORM=GL3 \
+            -DLIBRW_GL3_GFXLIB=SDL2 \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY="" \
+            -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=""
+
+      - name: Build
+        run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Package IPA (zip the .app)
+        run: |
+          APP=$(find build -name "reVC.app" -type d | head -n 1)
+          echo "Found app: $APP"
+          mkdir -p payload
+          cp -R "$APP" payload/
+          cd payload && zip -r ../reVC.ipa reVC.app
+          cd ..
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: reVC-ios-ipa
+          path: reVC.ipa

@@ -1,0 +1,39 @@
+{
+  "images" : [
+    {
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024",
+      "scale" : "1x",
+      "filename" : "ic_lit_mob.png"
+    },
+    {
+      "idiom" : "iphone",
+      "scale" : "2x",
+      "size" : "60x60",
+      "filename" : "ic_lit_mob.png"
+    },
+    {
+      "idiom" : "iphone",
+      "scale" : "3x",
+      "size" : "60x60",
+      "filename" : "ic_lit_mob.png"
+    },
+    {
+      "idiom" : "ipad",
+      "scale" : "1x",
+      "size" : "76x76",
+      "filename" : "ic_lit_mob.png"
+    },
+    {
+      "idiom" : "ipad",
+      "scale" : "2x",
+      "size" : "76x76",
+      "filename" : "ic_lit_mob.png"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}

@@ -1,0 +1,39 @@
+# Android / Gradle
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IDE
+.idea/
+*.iml
+deploymentTargetDropDown.xml
+misc.xml
+render.experimental.xml
+.vs/
+
+# Logs and temp files
+*.hprof
+*.log
+*.tmp
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Legacy generated files
+native/src/extras/GitSHA1.cpp
+
+# Prebuilt native binaries (Android) - iOS build compiles from source
+*.so
+*.a
+*.dylib
+*.dll
+*.apk
+*.mp4
+
