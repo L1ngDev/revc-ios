@@ -460,7 +460,8 @@ SelectServerAndUpdate(NSInteger sel, UIView *root)
 	if (g_mainPanelHolder) {
 		for (UIView *v in [NSArray arrayWithArray:g_mainPanelHolder.subviews])
 			[v removeFromSuperview];
-		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, sel, ^{
+		UIView *it = ServerItem(g_mainPanelHolder.bounds.size, sel, ^(NSInteger s) {
+			(void)s;
 			ShowServers(root);
 		});
 		it.frame = g_mainPanelHolder.bounds;
