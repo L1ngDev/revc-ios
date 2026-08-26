@@ -1613,14 +1613,15 @@ Idle(void *arg)
 			CPlayerPed *dp = CWorld::Players[CWorld::PlayerInFocus].m_pPed;
 			CVector pp(0,0,0);
 			if (dp) pp = dp->GetPosition();
-			debug("DIAG: t=%u step=%.2f fade=%.0f fstat=%d cut=%d cutTime=%d player=%d menu=%d pedPos=%.1f,%.1f,%.1f",
+			debug("DIAG: t=%u step=%.2f fade=%.0f fstat=%d cut=%d cutTime=%d player=%d menu=%d pedPos=%.1f,%.1f,%.1f camPos=%.1f,%.1f,%.1f",
 				CTimer::GetTimeInMilliseconds(), CTimer::GetTimeStep(),
 				CDraw::FadeValue, TheCamera.GetScreenFadeStatus(),
 				CCutsceneMgr::IsCutsceneProcessing() ? 1 : 0,
 				CCutsceneMgr::GetCutsceneTimeInMilleseconds(),
 				dp != nil ? 1 : 0,
 				FrontEndMenuManager.m_bMenuActive ? 1 : 0,
-				pp.x, pp.y, pp.z);
+				pp.x, pp.y, pp.z,
+				TheCamera.GetGameCamPosition().x, TheCamera.GetGameCamPosition().y, TheCamera.GetGameCamPosition().z);
 		}
 	}
 #endif

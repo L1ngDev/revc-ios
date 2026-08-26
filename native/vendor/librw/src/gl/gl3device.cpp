@@ -1701,6 +1701,10 @@ startSDL2(void)
 #ifdef __APPLE__
 	ios_log("gl3: glad loaded ok (gles=%d version=%d)", gl3Caps.gles, gl3Caps.glversion);
 #endif
+#ifdef __IPHONEOS__
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&g_iOSMainFBO);
+	ios_log("gl3: captured g_iOSMainFBO=%u", g_iOSMainFBO);
+#endif
 
 #ifndef _ANDROID
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));

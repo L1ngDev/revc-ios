@@ -2060,6 +2060,8 @@ main(int argc, char *argv[])
 						InitialiseGame();
 
 						FrontEndMenuManager.m_bGameNotLoaded = false;
+						// launcher start: snap the camera back to gameplay (cutscene was skipped)
+						TheCamera.RestoreWithJumpCut();
 						// launcher start: fade in immediately, never sit on a black screen
 						TheCamera.SetFadeColour(0, 0, 0);
 						TheCamera.Fade(1.0f, FADE_IN);
