@@ -2,46 +2,57 @@ name: Build reVC iOS IPA
 
 on:
   push:
-    branches: [ main, master, ios ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  build-ios:
-    runs-on: macos-latest
+  build-ipa:
+    runs-on: macos-14
+    timeout-minutes: 120
+
     steps:
-      - name: Checkout (self-contained, no submodules)
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install CMake
-        run: brew install cmake
-
-      - name: Configure (iOS, arm64, unsigned)
+      - name: Configure (iOS arm64, unsigned)
         run: |
-          cmake -S ios -B build \
+          cmake -S native/ios -B build -G Xcode \
             -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
-            -DLIBRW_PLATFORM=GL3 \
-            -DLIBRW_GL3_GFXLIB=SDL2 \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY="" \
-            -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=""
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
 
       - name: Build
-        run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
-
-      - name: Package IPA (zip the .app)
         run: |
-          APP=$(find build -name "reVC.app" -type d | head -n 1)
-          echo "Found app: $APP"
-          mkdir -p payload
-          cp -R "$APP" payload/
-          cd payload && zip -r ../reVC.ipa reVC.app
-          cd ..
+          set -o pipefail
+          xcodebuild -project build/revc_ios.xcodeproj \
+            -target revc \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            -jobs $(sysctl -n hw.ncpu) \
+            build 2>&1 | tee build.log
 
-      - name: Upload IPA
+      - name: Package IPA
+        run: |
+          APP=$(find build -type d -name "*.app" -not -path "*_CodeSignature*" | head -1)
+          echo "App bundle: $APP"
+          rm -rf Payload
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry revc-ios.ipa Payload
+
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: reVC-ios-ipa
-          path: reVC.ipa
+          name: revc-ios-ipa
+          path: revc-ios.ipa
+          retention-days: 30
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
